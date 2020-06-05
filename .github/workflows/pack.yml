@@ -23,7 +23,7 @@ jobs:
       - name: Create package
         run: dotnet pack --configuration Release /p:Version=${{ steps.get_version.outputs.VERSION }}
       - name: Publish the package to GPR
-        run: dotnet nuget push osu.Server.QueueProcessor/bin/Release/bin/Release/*.nupkg
+        run: dotnet nuget push osu.Server.QueueProcessor/bin/Release/*.nupkg
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
