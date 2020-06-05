@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
 using Xunit;
 using Xunit.Abstractions;
 using Assert = Xunit.Assert;
@@ -50,11 +48,11 @@ namespace QueueProcessorTests
 
             var cts = new CancellationTokenSource(10000);
 
-            var objects = new List<FakeData>();
+            var objects = new HashSet<FakeData>();
             for (int i = 0; i < send_count; i++)
                 objects.Add(new FakeData());
 
-            List<FakeData> receivedObjects = new List<FakeData>();
+            var receivedObjects = new HashSet<FakeData>();
 
             foreach (var obj in objects)
                 processor.PushToQueue(obj);
@@ -69,7 +67,7 @@ namespace QueueProcessorTests
 
             processor.Run(cts.Token);
 
-            CollectionAssert.AreEquivalent(objects, receivedObjects);
+            Assert.Equal(objects, receivedObjects);
         }
 
         /// <summary>
