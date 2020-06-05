@@ -21,7 +21,7 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
       - name: Create package
-        run: dotnet pack --configuration Release /p:Version=${{ VERSION }}
+        run: dotnet pack --configuration Release /p:Version=${{ steps.get_version.outputs.VERSION }}
       - name: Publish the package to GPR
         run: dotnet nuget push osu.Server.QueueProcessor/bin/Release/bin/Release/*.nupkg --source "github"
       - name: Create Release
@@ -30,7 +30,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ VERSION }}
-          release_name: ${{ VERSION }}
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: false
