@@ -3,6 +3,10 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <AssemblyName>OsuQueueProcessor</AssemblyName>
+        <PackageId>ppy.osu.Server.OsuQueueProcessor</PackageId>
+        <Authors>Dean Herbert</Authors>
+        <Company>ppy Pty Ltd</Company>
+        <RepositoryUrl>https://github.com/ppy/osu-queue-processor</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
