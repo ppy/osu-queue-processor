@@ -102,9 +102,11 @@ namespace QueueProcessorTests
                     {
                         var obj = FakeData.New();
 
-                        processor.PushToQueue(obj);
                         lock (inFlightObjects)
+                        {
+                            processor.PushToQueue(obj);
                             inFlightObjects.Add(obj);
+                        }
 
                         Interlocked.Increment(ref sent);
                     }
