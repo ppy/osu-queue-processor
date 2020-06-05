@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using OsuQueueProcessor;
 using Xunit;
 
@@ -25,7 +26,7 @@ namespace QueueProcessorTests
                 cts.Cancel();
             };
 
-            processor.Run(cts.Token);
+            Task.Run(() => processor.Run(cts.Token), cts.Token);
 
             cts.Token.WaitHandle.WaitOne(10000);
             
