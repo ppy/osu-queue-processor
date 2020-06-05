@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace QueueProcessorTests
         {
             var cts = new CancellationTokenSource(10000);
 
-            var obj = new FakeData();
+            var obj = FakeData.New();
             FakeData receivedObject = null;
 
             processor.PushToQueue(obj);
@@ -50,7 +51,7 @@ namespace QueueProcessorTests
 
             var objects = new HashSet<FakeData>();
             for (int i = 0; i < send_count; i++)
-                objects.Add(new FakeData());
+                objects.Add(FakeData.New());
 
             var receivedObjects = new HashSet<FakeData>();
 
@@ -99,7 +100,7 @@ namespace QueueProcessorTests
                 {
                     while (!cts.IsCancellationRequested)
                     {
-                        var obj = new FakeData();
+                        var obj = FakeData.New();
 
                         processor.PushToQueue(obj);
                         lock (inFlightObjects)

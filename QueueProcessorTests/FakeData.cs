@@ -7,10 +7,12 @@ namespace QueueProcessorTests
     {
         public readonly Guid Data;
 
-        public FakeData(Guid? data = null)
+        public FakeData(Guid data)
         {
-            this.Data = data ?? Guid.NewGuid();
+            Data = data;
         }
+
+        public static FakeData New() => new FakeData(Guid.NewGuid());
 
         public override string ToString() => Data.ToString();
 
