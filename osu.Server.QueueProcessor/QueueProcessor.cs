@@ -36,7 +36,7 @@ namespace OsuQueueProcessor
         {
             Logger.Log("Starting queue processing..");
 
-            var threadPool = new ThreadedTaskScheduler(Environment.ProcessorCount, "workers");
+            using var threadPool = new ThreadedTaskScheduler(Environment.ProcessorCount, "workers");
 
             var database = redis.GetDatabase();
 
