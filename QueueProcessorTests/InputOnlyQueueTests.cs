@@ -80,14 +80,19 @@ namespace QueueProcessorTests
         {
             var inFlightObjects = new List<FakeData>();
 
+            int processed = 0;
+
             processor.Received += o =>
             {
                 lock (inFlightObjects)
+                {
                     inFlightObjects.Remove(o);
+                    Interlocked.Increment(ref processed);
+                }
             };
 
             // start and stop processing multiple times, checking items are in a good state each time.
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
                 var cts = new CancellationTokenSource();
 
@@ -105,14 +110,14 @@ namespace QueueProcessorTests
 
                 var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token));
 
-                Thread.Sleep(500);
+                Thread.Sleep(1000);
 
                 cts.Cancel();
 
                 sendTask.Wait(10000);
                 receiveTask.Wait(10000);
 
-                output.WriteLine($"In-flight objects: {inFlightObjects.Count}");
+                output.WriteLine($"In-flight objects: {inFlightObjects.Count} Processed: {processed}");
 
                 Assert.Equal(inFlightObjects.Count, processor.GetQueueSize());
             }
@@ -131,6 +136,8 @@ namespace QueueProcessorTests
 
             Assert.Empty(inFlightObjects);
             Assert.Equal(0, processor.GetQueueSize());
+
+            output.WriteLine($"In-flight objects: {inFlightObjects.Count} Processed: {processed}");
         }
     }
 }
