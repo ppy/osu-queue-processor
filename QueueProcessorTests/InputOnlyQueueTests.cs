@@ -59,7 +59,8 @@ namespace QueueProcessorTests
 
             processor.Received += o =>
             {
-                receivedObjects.Add(o);
+                lock (receivedObjects)
+                    receivedObjects.Add(o);
 
                 if (receivedObjects.Count == send_count)
                     cts.Cancel();
