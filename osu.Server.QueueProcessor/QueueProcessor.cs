@@ -31,7 +31,8 @@ namespace OsuQueueProcessor
         /// <summary>
         /// Start running the queue.
         /// </summary>
-        public void Run()
+        /// <param name="cancellation"></param>
+        public void Run(CancellationToken cancellation)
         {
             Logger.Log("Starting queue processing..");
 
@@ -39,7 +40,7 @@ namespace OsuQueueProcessor
 
             var database = redis.GetDatabase();
 
-            while (true)
+            while (!cancellation.IsCancellationRequested)
             {
                 try
                 {
@@ -53,27 +54,23 @@ namespace OsuQueueProcessor
 
                     var item = JsonConvert.DeserializeObject<T>(redisValue);
 
+                    // individual processing should not be cancelled as we have already grabbed from the queue.
                     Task.Factory.StartNew(() => ProcessResult(item), default, TaskCreationOptions.HideScheduler, threadPool)
                         .ContinueWith(t =>
                         {
                             if (t.Exception != null)
                                 Logger.Error(t.Exception, $"Error processing {item}");
-                        });
+                        }, CancellationToken.None);
                 }
                 catch (Exception e)
                 {
                     Logger.Error(e, $"Error processing from queue");
                 }
             }
-
-            // ReSharper disable once FunctionNeverReturns
         }
 
-        public void PushToQueue(T obj)
-        {
-            Logger.Log($"Pushing {obj} to queue...");
+        public void PushToQueue(T obj) =>
             redis.GetDatabase().ListLeftPush(inputQueueName, JsonConvert.SerializeObject(obj));
-        }
 
         /// <summary>
         /// Implement to process a single item from the queue.

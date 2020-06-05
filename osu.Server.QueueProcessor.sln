@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.QueueProcessor", "osu.Server.QueueProcessor\osu.Server.QueueProcessor.csproj", "{2601BC23-DAD3-46CA-861B-5D2386631939}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestQueueProcessor", "TestQueueProcessor\TestQueueProcessor.csproj", "{5C52908E-2FB6-4051-B665-91D6EE45B277}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueProcessorTests", "QueueProcessorTests\QueueProcessorTests.csproj", "{844442F7-C058-42A6-9217-433D9663C9F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +14,9 @@ Global
 		{2601BC23-DAD3-46CA-861B-5D2386631939}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2601BC23-DAD3-46CA-861B-5D2386631939}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2601BC23-DAD3-46CA-861B-5D2386631939}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5C52908E-2FB6-4051-B665-91D6EE45B277}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5C52908E-2FB6-4051-B665-91D6EE45B277}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5C52908E-2FB6-4051-B665-91D6EE45B277}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5C52908E-2FB6-4051-B665-91D6EE45B277}.Release|Any CPU.Build.0 = Release|Any CPU
+		{844442F7-C058-42A6-9217-433D9663C9F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{844442F7-C058-42A6-9217-433D9663C9F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{844442F7-C058-42A6-9217-433D9663C9F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{844442F7-C058-42A6-9217-433D9663C9F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
