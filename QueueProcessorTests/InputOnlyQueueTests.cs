@@ -5,7 +5,7 @@ using Xunit;
 
 namespace QueueProcessorTests
 {
-    public class BasicQueueTests
+    public class InputOnlyQueueTests
     {
         [Fact]
         public void SendThenReceive_Single()
@@ -36,7 +36,7 @@ namespace QueueProcessorTests
         public void SendThenReceive_Multiple()
         {
             const int send_count = 20;
-            
+
             var cts = new CancellationTokenSource();
 
             var processor = new TestProcessor();
