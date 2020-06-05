@@ -101,9 +101,9 @@ namespace QueueProcessorTests
                         lock (inFlightObjects)
                             inFlightObjects.Add(obj);
                     }
-                }, cts.Token);
+                });
 
-                var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token), cts.Token);
+                var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token));
 
                 Thread.Sleep(500);
 
