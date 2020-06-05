@@ -25,7 +25,7 @@ namespace QueueProcessorTests
         [Fact]
         public void SendThenReceive_Single()
         {
-            var cts = new CancellationTokenSource();
+            var cts = new CancellationTokenSource(10000);
 
             var obj = new FakeData();
             FakeData receivedObject = null;
@@ -38,9 +38,7 @@ namespace QueueProcessorTests
                 cts.Cancel();
             };
 
-            Task.Run(() => processor.Run(cts.Token), cts.Token);
-
-            cts.Token.WaitHandle.WaitOne(10000);
+            processor.Run(cts.Token);
 
             Assert.Equal(obj, receivedObject);
         }
@@ -50,7 +48,7 @@ namespace QueueProcessorTests
         {
             const int send_count = 20;
 
-            var cts = new CancellationTokenSource();
+            var cts = new CancellationTokenSource(10000);
 
             var objects = new List<FakeData>();
             for (int i = 0; i < send_count; i++)
@@ -69,9 +67,7 @@ namespace QueueProcessorTests
                     cts.Cancel();
             };
 
-            Task.Run(() => processor.Run(cts.Token), cts.Token);
-
-            cts.Token.WaitHandle.WaitOne(10000);
+            processor.Run(cts.Token);
 
             CollectionAssert.AreEquivalent(objects, receivedObjects);
         }
