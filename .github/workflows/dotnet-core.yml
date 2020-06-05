@@ -7,10 +7,10 @@ on:
     branches: [ master ]
 
 jobs:
-  container-job:
+  unit-tests:
 
     runs-on: ubuntu-latest
-    container: node:10.18-jessie
+    container: debian
 
     services:
       redis:
