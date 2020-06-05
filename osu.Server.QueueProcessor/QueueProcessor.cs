@@ -72,6 +72,9 @@ namespace OsuQueueProcessor
         public void PushToQueue(T obj) =>
             redis.GetDatabase().ListLeftPush(inputQueueName, JsonConvert.SerializeObject(obj));
 
+        public long GetQueueSize() =>
+            redis.GetDatabase().ListLength(inputQueueName);
+
         public void ClearQueue() => redis.GetDatabase().KeyDelete(inputQueueName);
 
         /// <summary>
