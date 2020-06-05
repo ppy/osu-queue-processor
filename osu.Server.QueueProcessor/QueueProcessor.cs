@@ -61,7 +61,7 @@ namespace osu.Server.QueueProcessor
                         {
                             if (t.Exception != null)
                                 Logger.Error(t.Exception, $"Error processing {item}");
-                        }, CancellationToken.None);
+                        });
                 }
                 catch (Exception e)
                 {

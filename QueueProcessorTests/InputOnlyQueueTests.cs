@@ -80,6 +80,7 @@ namespace QueueProcessorTests
             var inFlightObjects = new List<FakeData>();
 
             int processed = 0;
+            int sent = 0;
 
             processor.Received += o =>
             {
@@ -104,6 +105,8 @@ namespace QueueProcessorTests
                         processor.PushToQueue(obj);
                         lock (inFlightObjects)
                             inFlightObjects.Add(obj);
+
+                        Interlocked.Increment(ref sent);
                     }
                 });
 
@@ -116,7 +119,7 @@ namespace QueueProcessorTests
                 sendTask.Wait(10000);
                 receiveTask.Wait(10000);
 
-                output.WriteLine($"In-flight objects: {inFlightObjects.Count} Processed: {processed}");
+                output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
 
                 Assert.Equal(inFlightObjects.Count, processor.GetQueueSize());
             }
@@ -136,7 +139,7 @@ namespace QueueProcessorTests
             Assert.Empty(inFlightObjects);
             Assert.Equal(0, processor.GetQueueSize());
 
-            output.WriteLine($"In-flight objects: {inFlightObjects.Count} Processed: {processed}");
+            output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
         }
     }
 }
