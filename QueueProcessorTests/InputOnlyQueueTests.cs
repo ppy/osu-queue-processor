@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using NUnit.Framework;
 using Xunit;
+using Assert = Xunit.Assert;
 
 namespace QueueProcessorTests
 {
@@ -67,7 +69,7 @@ namespace QueueProcessorTests
 
             cts.Token.WaitHandle.WaitOne(10000);
 
-            Assert.Equal(objects, receivedObjects);
+            CollectionAssert.AreEquivalent(objects, receivedObjects);
         }
     }
 }
