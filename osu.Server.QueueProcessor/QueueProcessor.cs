@@ -72,6 +72,8 @@ namespace OsuQueueProcessor
         public void PushToQueue(T obj) =>
             redis.GetDatabase().ListLeftPush(inputQueueName, JsonConvert.SerializeObject(obj));
 
+        public void ClearQueue() => redis.GetDatabase().KeyDelete(inputQueueName);
+
         /// <summary>
         /// Implement to process a single item from the queue.
         /// </summary>

@@ -7,12 +7,19 @@ namespace QueueProcessorTests
 {
     public class InputOnlyQueueTests
     {
+        private readonly TestProcessor processor;
+
+        public InputOnlyQueueTests()
+        {
+            processor = new TestProcessor();
+            processor.ClearQueue();
+        }
+
         [Fact]
         public void SendThenReceive_Single()
         {
             var cts = new CancellationTokenSource();
 
-            var processor = new TestProcessor();
 
             var obj = new FakeData();
             FakeData receivedObject = null;
@@ -38,8 +45,6 @@ namespace QueueProcessorTests
             const int send_count = 20;
 
             var cts = new CancellationTokenSource();
-
-            var processor = new TestProcessor();
 
             var objects = new List<FakeData>();
             for (int i = 0; i < send_count; i++)
