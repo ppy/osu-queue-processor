@@ -18,7 +18,7 @@ jobs:
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create package
-        run: dotnet pack --configuration Release /p:Version=${{ github.ref }}
+        run: dotnet pack --configuration Release /p:Version=${{ github.event.release.tag_name }}
       - name: Publish the package to GPR
         run: dotnet nuget push osu.Server.QueueProcessor/bin/Release/bin/Release/*.nupkg --source "github"
       - name: Create Release
@@ -27,7 +27,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ github.event.release.tag_name }}
+          release_name: ${{ github.event.release.tag_name }}
           draft: false
           prerelease: false
