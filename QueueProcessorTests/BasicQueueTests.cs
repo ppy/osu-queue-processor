@@ -1,7 +1,6 @@
-using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OsuQueueProcessor;
 using Xunit;
 
 namespace QueueProcessorTests
@@ -29,27 +28,41 @@ namespace QueueProcessorTests
             Task.Run(() => processor.Run(cts.Token), cts.Token);
 
             cts.Token.WaitHandle.WaitOne(10000);
-            
+
             Assert.Equal(obj, receivedObject);
         }
-    }
 
-    public class TestProcessor : QueueProcessor<FakeData>
-    {
-        public TestProcessor()
-            : base(new QueueConfiguration
+        [Fact]
+        public void SendThenReceive_Multiple()
+        {
+            const int send_count = 20;
+            
+            var cts = new CancellationTokenSource();
+
+            var processor = new TestProcessor();
+
+            var objects = new List<FakeData>();
+            for (int i = 0; i < send_count; i++)
+                objects.Add(new FakeData());
+
+            List<FakeData> receivedObjects = new List<FakeData>();
+
+            foreach (var obj in objects)
+                processor.PushToQueue(obj);
+
+            processor.Received += o =>
             {
-                InputQueueName = "test"
-            })
-        {
-        }
+                receivedObjects.Add(o);
 
-        protected override void ProcessResult(FakeData result)
-        {
-            Console.WriteLine($"Got result: {result}");
-            Received?.Invoke(result);
-        }
+                if (receivedObjects.Count == send_count)
+                    cts.Cancel();
+            };
 
-        public Action<FakeData> Received;
+            Task.Run(() => processor.Run(cts.Token), cts.Token);
+
+            cts.Token.WaitHandle.WaitOne(10000);
+
+            Assert.Equal(objects, receivedObjects);
+        }
     }
 }
