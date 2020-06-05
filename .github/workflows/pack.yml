@@ -1,0 +1,33 @@
+name: Pack
+
+on:
+  push:
+    tags: '*'
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.x
+          source-url: https://nuget.pkg.github.com/ppy/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create package
+        run: dotnet pack --configuration Release /p:Version=${{ github.ref }}
+      - name: Publish the package to GPR
+        run: dotnet nuget push osu.Server.QueueProcessor/bin/Release/bin/Release/*.nupkg --source "github"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
