@@ -13,11 +13,7 @@ namespace QueueProcessorTests
         {
         }
 
-        protected override void ProcessResult(FakeData result)
-        {
-            Console.WriteLine($"Got result: {result}");
-            Received?.Invoke(result);
-        }
+        protected override void ProcessResult(FakeData result) => Received?.Invoke(result);
 
         public Action<FakeData> Received;
     }
