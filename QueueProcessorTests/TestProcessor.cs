@@ -1,5 +1,5 @@
 using System;
-using OsuQueueProcessor;
+using osu.Server.QueueProcessor;
 
 namespace QueueProcessorTests
 {

@@ -6,7 +6,7 @@ using osu.Framework.Logging;
 using osu.Framework.Threading;
 using StackExchange.Redis;
 
-namespace OsuQueueProcessor
+namespace osu.Server.QueueProcessor
 {
     public abstract class QueueProcessor<T>
     {

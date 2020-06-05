@@ -1,4 +1,4 @@
-namespace OsuQueueProcessor
+namespace osu.Server.QueueProcessor
 {
     public class QueueConfiguration
     {

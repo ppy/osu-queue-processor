@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <RootNamespace>OsuQueueProcessor</RootNamespace>
+        <AssemblyName>OsuQueueProcessor</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
