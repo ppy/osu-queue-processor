@@ -42,27 +42,17 @@ namespace ManiaKeyRankingProcessor
                 {
                     rows++;
                 }
-                
+
                 db.Execute($"REPLACE INTO {newTableName}" +
-                           $"(user_id, x_rank_count, xh_rank_count, s_rank_count, sh_rank_count, a_rank_count, ) " +
-                           $"VALUES)"
-                    
-                /*user_id int(11) unsigned not null
-                primary key,
-                    playcount mediumint(11) not null,
-                x_rank_count mediumint not null,
-                xh_rank_count mediumint default 0 null,
-                s_rank_count mediumint not null,
-                sh_rank_count mediumint default 0 null,
-                a_rank_count mediumint not null,
-                country_acronym char(2) default '' not null,
-                rank_score float unsigned not null,
-                rank_score_index int unsigned not null,
-                accuracy_new float unsigned not null,
-                last_update timestamp default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
-                    last_played timestamp default CURRENT_TIMESTAMP not null
-                    */
-                
+                           $"(user_id, country_acronym, playcount, x_rank_count, xh_rank_count, s_rank_count, sh_rank_count, a_rank_count, rank_score, rank_score_index, accuracy_new) " +
+                           $"VALUES (@user_id, @country_acronym, @playcount, 0, 0, 0, 0, 0, 0, 0, 1)",
+                    new
+                    {
+                        user_id = user,
+                        playcount = rows,
+                        country_acronym = row.country_acronym
+                    });
+
                 Console.WriteLine($"Recalculated user {user} for {size}k ({rows} rows)");
             }
         }
