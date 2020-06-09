@@ -45,39 +45,45 @@ namespace ManiaKeyRankingProcessor
                     //get all mania scores for current key mode
                     var scores = db.Query($"SELECT * FROM osu_scores_mania_high WHERE user_id = @user_id AND beatmap_id IN (SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND diff_size = {keyCount})", stats).ToList();
 
-                    (stats.pp, stats.accuracy) = getAggregatePerformanceAccuracy(scores);
+                    if (scores.Any())
+                    {
+                        (stats.pp, stats.accuracy) = getAggregatePerformanceAccuracy(scores);
 
-                    stats.pos = 1 + db.QuerySingle<int>($"SELECT COUNT(*) FROM {newTableName} WHERE rank_score > @pp", stats);
+                        stats.pos = 1 + db.QuerySingle<int>($"SELECT COUNT(*) FROM {newTableName} WHERE rank_score > @pp", stats);
 
-                    stats.x_rank_count = scores.Count(s => s.rank == "X");
-                    stats.xh_rank_count = scores.Count(s => s.rank == "XH");
-                    stats.s_rank_count = scores.Count(s => s.rank == "S");
-                    stats.sh_rank_count = scores.Count(s => s.rank == "SH");
-                    stats.a_rank_count = scores.Count(s => s.rank == "A");
+                        stats.x_rank_count = scores.Count(s => s.rank == "X");
+                        stats.xh_rank_count = scores.Count(s => s.rank == "XH");
+                        stats.s_rank_count = scores.Count(s => s.rank == "S");
+                        stats.sh_rank_count = scores.Count(s => s.rank == "SH");
+                        stats.a_rank_count = scores.Count(s => s.rank == "A");
+                    }
 
-                    // remove self from total if required.
                     if (existingRow != null)
                     {
+                        // remove self from total if required.
+                        // note that as we are processing jobs threaded, this may be off-by-one due to the above being fetched in two queries.
                         if (existingRow.rank_score > stats.pp)
-                            // note that as we are processing jobs threaded, this may be off-by-one due to the above being fetched in two queries.
                             stats.pos = Math.Max(1, stats.pos - 1);
+
+                        db.Execute($"UPDATE {newTableName} "
+                                   + "SET rank_score = @pp, playcount = playcount + 1, rank_score_index = @pos, accuracy_new = @accuracy, "
+                                   + "x_rank_count = @x_rank_count, xh_rank_count = @xh_rank_count, s_rank_count = @s_rank_count, sh_rank_count = @sh_rank_count, a_rank_count = @a_rank_count "
+                                   + "WHERE user_id = @user_id", stats);
                     }
                     else
                     {
-                        //no existing row, so we are going to insert.
-                        stats.country_acronym = scores.FirstOrDefault()?.country_acronym ?? db.QueryFirst<string>("SELECT country_acronym FROM phpbb_users WHERE user_id = @user_id", stats);
-
                         // make up a rough playcount based on user play distribution.
-                        stats.playcount = db.QuerySingle<int?>("SELECT " +
-                                                               "(SELECT playcount FROM osu_user_stats_mania WHERE user_id = @user_id) * " +
-                                                               $"(SELECT COUNT(*) FROM osu_scores_mania_high WHERE user_id = @user_id AND beatmap_id IN (SELECT beatmap_id FROM osu_beatmaps WHERE diff_size = {keyCount} AND playmode = 3)) / " +
-                                                               "(SELECT COUNT(*) FROM osu_scores_mania_high WHERE user_id = @user_id)", stats) ?? 1;
-                    }
+                        stats.playcount = db.QuerySingle<int?>(
+                            "SELECT " +
+                            "(SELECT playcount FROM osu_user_stats_mania WHERE user_id = @user_id) * " +
+                            $"(SELECT COUNT(*) FROM osu_scores_mania_high WHERE user_id = @user_id AND beatmap_id IN (SELECT beatmap_id FROM osu_beatmaps WHERE diff_size = {keyCount} AND playmode = 3)) / " +
+                            "(SELECT COUNT(*) FROM osu_scores_mania_high WHERE user_id = @user_id)", stats) ?? 1;
 
-                    db.Execute($"INSERT INTO {newTableName}" +
-                               "(user_id, country_acronym, playcount, x_rank_count, xh_rank_count, s_rank_count, sh_rank_count, a_rank_count, rank_score, rank_score_index, accuracy_new) " +
-                               "VALUES (@user_id, @country_acronym, @playcount, @x_rank_count, @xh_rank_count, @s_rank_count, @sh_rank_count, @a_rank_count, @pp, @pos, @accuracy)" +
-                               "ON DUPLICATE KEY UPDATE rank_score = @pp, playcount = playcount + 1, rank_score_index = @pos, x_rank_count = @x_rank_count, xh_rank_count = @xh_rank_count, s_rank_count = @s_rank_count, sh_rank_count = @sh_rank_count, a_rank_count = @a_rank_count, accuracy_new = @accuracy", stats);
+                        db.Execute($"INSERT INTO {newTableName}"
+                                   + "(user_id, country_acronym, playcount, x_rank_count, xh_rank_count, s_rank_count, sh_rank_count, a_rank_count, rank_score, rank_score_index, accuracy_new)"
+                                   + "SELECT @user_id, country_acronym, @playcount, @x_rank_count, @xh_rank_count, @s_rank_count, @sh_rank_count, @a_rank_count, @pp, @pos, @accuracy "
+                                   + "FROM phpbb_users WHERE user_id = @user_id", stats);
+                    }
                 }
                 else
                 {

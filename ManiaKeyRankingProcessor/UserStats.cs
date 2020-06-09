@@ -9,7 +9,6 @@ namespace ManiaKeyRankingProcessor
     public class UserStats
     {
         public long user_id { get; set; }
-        public string country_acronym { get; set; }
         public int playcount { get; set; } // only used for initial population
         public int pos { get; set; }
         public double pp { get; set; }
