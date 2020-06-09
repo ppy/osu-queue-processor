@@ -11,5 +11,7 @@ namespace ManiaKeyRankingProcessor
         public int score_id { get; set; }
 
         public bool high { get; set; }
+
+        public override string ToString() => $"score_id: {score_id} high: {high}";
     }
 }
