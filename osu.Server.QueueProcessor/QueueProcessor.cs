@@ -134,8 +134,9 @@ namespace osu.Server.QueueProcessor
         protected MySqlConnection GetDatabaseConnection()
         {
             string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "db");
-            
-            var connection = new MySqlConnection($"Server={host};Database=osu;User ID=root;ConnectionTimeout=5;");
+            string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "www");
+
+            var connection = new MySqlConnection($"Server={host};Database=osu;User ID={user};ConnectionTimeout=5;");
             connection.Open();
             return connection;
         }
