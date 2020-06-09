@@ -43,7 +43,9 @@ namespace ManiaKeyRankingProcessor
                 if (item.high || existingRow == null)
                 {
                     //get all mania scores for current key mode
-                    var scores = db.Query($"SELECT * FROM osu_scores_mania_high WHERE user_id = @user_id AND beatmap_id IN (SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND diff_size = {keyCount})", stats).ToList();
+                    var scores = db.Query("SELECT * FROM osu_scores_mania_high "
+                                          + "WHERE user_id = @user_id AND pp IS NOT NULL AND beatmap_id IN "
+                                          + $"(SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND diff_size = {keyCount})", stats).ToList();
 
                     if (scores.Any())
                     {
@@ -97,9 +99,9 @@ namespace ManiaKeyRankingProcessor
             if (!scores.Any())
                 return (0, 100);
 
-            scores = scores.Where(s => s.pp != null)
-                           .OrderByDescending(s => s.pp)
-                           .GroupBy(s => s.beatmap_id).Select(g => g.First());
+            scores = scores.OrderByDescending(s => s.pp)
+                           .GroupBy(s => s.beatmap_id).Select(g => g.First()).ToList();
+
             double factor = 1;
             double pp = 0;
 
