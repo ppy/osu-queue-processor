@@ -12,7 +12,6 @@ namespace osu.Server.QueueProcessor
 
         private readonly CancellationTokenSource cts;
 
-
         public GracefulShutdownSource(in CancellationToken cancellation = default)
         {
             cts = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
@@ -32,7 +31,7 @@ namespace osu.Server.QueueProcessor
         private void onUnloading(AssemblyLoadContext _)
         {
             cts.Cancel();
-            shutdownComplete.Wait();
+            shutdownComplete.Wait(CancellationToken.None);
         }
 
         public void Dispose()

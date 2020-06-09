@@ -110,9 +110,9 @@ namespace QueueProcessorTests
 
                         Interlocked.Increment(ref sent);
                     }
-                });
+                }, CancellationToken.None);
 
-                var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token));
+                var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token), CancellationToken.None);
 
                 Thread.Sleep(1000);
 

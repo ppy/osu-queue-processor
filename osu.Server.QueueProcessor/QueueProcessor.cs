@@ -85,11 +85,11 @@ namespace osu.Server.QueueProcessor
                         }
                         catch (Exception e)
                         {
-                            Logger.Error(e, $"Error processing from queue");
+                            Logger.Error(e, "Error processing from queue");
                         }
                     }
 
-                    Logger.Log($"Shutting down..");
+                    Logger.Log("Shutting down..");
                 }
             }
 
