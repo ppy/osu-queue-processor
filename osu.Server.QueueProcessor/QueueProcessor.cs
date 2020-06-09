@@ -44,46 +44,48 @@ namespace osu.Server.QueueProcessor
             {
                 Logger.Log($"Starting queue processing (Backlog of {GetQueueSize()})..");
 
-                using var threadPool = new ThreadedTaskScheduler(Environment.ProcessorCount, "workers");
-
-                var database = redis.GetDatabase();
-
-                while (!cts.Token.IsCancellationRequested)
+                using (var threadPool = new ThreadedTaskScheduler(Environment.ProcessorCount, "workers"))
                 {
-                    try
-                    {
-                        var redisValue = database.ListRightPop(inputQueueName);
+                    var database = redis.GetDatabase();
 
-                        if (!redisValue.HasValue)
+                    while (!cts.Token.IsCancellationRequested)
+                    {
+                        try
                         {
-                            Thread.Sleep(config.TimeBetweenPolls);
-                            continue;
+                            var redisValue = database.ListRightPop(inputQueueName);
+
+                            if (!redisValue.HasValue)
+                            {
+                                Thread.Sleep(config.TimeBetweenPolls);
+                                continue;
+                            }
+
+                            Interlocked.Increment(ref totalDequeued);
+                            var item = JsonConvert.DeserializeObject<T>(redisValue);
+
+                            // individual processing should not be cancelled as we have already grabbed from the queue.
+                            Task.Factory.StartNew(() =>
+                                {
+                                    ProcessResult(item);
+                                    Interlocked.Increment(ref totalProcessed);
+                                }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
+                                .ContinueWith(t =>
+                                {
+                                    if (t.Exception != null)
+                                        Logger.Error(t.Exception, $"Error processing {item}");
+                                }, CancellationToken.None);
                         }
-
-                        Interlocked.Increment(ref totalDequeued);
-                        var item = JsonConvert.DeserializeObject<T>(redisValue);
-
-                        // individual processing should not be cancelled as we have already grabbed from the queue.
-                        Task.Factory.StartNew(() =>
-                            {
-                                ProcessResult(item);
-                                Interlocked.Increment(ref totalProcessed);
-                            }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
-                            .ContinueWith(t =>
-                            {
-                                if (t.Exception != null)
-                                    Logger.Error(t.Exception, $"Error processing {item}");
-                            }, CancellationToken.None);
+                        catch (Exception e)
+                        {
+                            Logger.Error(e, $"Error processing from queue");
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e, $"Error processing from queue");
-                    }
+
+                    Logger.Log($"Shutting down..");
                 }
-                
-                Logger.Log($"Shutting down..");
-                outputStats();
             }
+
+            outputStats();
         }
 
         private void outputStats()
@@ -105,4 +107,3 @@ namespace osu.Server.QueueProcessor
         /// <param name="item">The item to process.</param>
         protected abstract void ProcessResult(T item);
     }
-}
