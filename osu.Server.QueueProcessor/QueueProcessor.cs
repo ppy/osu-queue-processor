@@ -20,6 +20,10 @@ namespace osu.Server.QueueProcessor
 
         private readonly string inputQueueName;
 
+        private long totalProcessed;
+
+        private long totalDequeued;
+
         protected QueueProcessor(QueueConfiguration config)
         {
             this.config = config;
@@ -35,6 +39,7 @@ namespace osu.Server.QueueProcessor
         /// <param name="cancellation">An optional cancellation token.</param>
         public void Run(CancellationToken cancellation = default)
         {
+            using (new Timer(_ => outputStats(), null, TimeSpan.Zero, TimeSpan.FromSeconds(5)))
             using (var cts = new GracefulShutdownSource(cancellation))
             {
                 Logger.Log($"Starting queue processing (Backlog of {GetQueueSize()})..");
@@ -55,15 +60,20 @@ namespace osu.Server.QueueProcessor
                             continue;
                         }
 
+                        Interlocked.Increment(ref totalDequeued);
                         var item = JsonConvert.DeserializeObject<T>(redisValue);
 
                         // individual processing should not be cancelled as we have already grabbed from the queue.
-                        Task.Factory.StartNew(() => ProcessResult(item), default, TaskCreationOptions.HideScheduler, threadPool)
+                        Task.Factory.StartNew(() =>
+                            {
+                                ProcessResult(item);
+                                Interlocked.Increment(ref totalProcessed);
+                            }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
                             .ContinueWith(t =>
                             {
                                 if (t.Exception != null)
                                     Logger.Error(t.Exception, $"Error processing {item}");
-                            });
+                            }, CancellationToken.None);
                     }
                     catch (Exception e)
                     {
@@ -72,7 +82,13 @@ namespace osu.Server.QueueProcessor
                 }
                 
                 Logger.Log($"Shutting down..");
+                outputStats();
             }
+        }
+
+        private void outputStats()
+        {
+            Logger.Log($"stats: backlog:{GetQueueSize()} dequeued:{totalDequeued} processed:{totalProcessed}");
         }
 
         public void PushToQueue(T obj) =>
