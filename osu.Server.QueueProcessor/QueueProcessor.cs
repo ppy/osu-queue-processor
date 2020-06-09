@@ -115,3 +115,4 @@ namespace osu.Server.QueueProcessor
         /// <param name="item">The item to process.</param>
         protected abstract void ProcessResult(T item);
     }
+}

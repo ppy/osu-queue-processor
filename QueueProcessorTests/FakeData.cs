@@ -20,6 +20,7 @@ namespace QueueProcessorTests
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
+
             return Data.Equals(other.Data);
         }
 
@@ -28,6 +29,7 @@ namespace QueueProcessorTests
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
+
             return Equals((FakeData)obj);
         }
 
