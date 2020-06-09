@@ -24,6 +24,8 @@ namespace osu.Server.QueueProcessor
 
         private long totalDequeued;
 
+        private long totalInFlight => totalDequeued - totalProcessed;
+
         protected QueueProcessor(QueueConfiguration config)
         {
             this.config = config;
@@ -52,7 +54,7 @@ namespace osu.Server.QueueProcessor
                     {
                         try
                         {
-                            if (totalDequeued - totalProcessed > config.MaxInFlightItems)
+                            if (totalInFlight > config.MaxInFlightItems)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;
@@ -96,7 +98,7 @@ namespace osu.Server.QueueProcessor
 
         private void outputStats()
         {
-            Logger.Log($"stats: backlog:{GetQueueSize()} dequeued:{totalDequeued} processed:{totalProcessed}");
+            Logger.Log($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed}");
         }
 
         public void PushToQueue(T obj) =>
