@@ -81,7 +81,7 @@ namespace ManiaKeyRankingProcessor
                             $"(SELECT COUNT(*) FROM osu_scores_mania_high WHERE user_id = @user_id AND beatmap_id IN (SELECT beatmap_id FROM osu_beatmaps WHERE diff_size = {keyCount} AND playmode = 3)) / " +
                             "(SELECT GREATEST(1, COUNT(*)) FROM osu_scores_mania_high WHERE user_id = @user_id)", stats) ?? 1;
 
-                        db.Execute($"INSERT INTO {newTableName}"
+                        db.Execute($"REPLACE INTO {newTableName}"
                                    + "(user_id, country_acronym, playcount, x_rank_count, xh_rank_count, s_rank_count, sh_rank_count, a_rank_count, rank_score, rank_score_index, accuracy_new)"
                                    + "SELECT @user_id, country_acronym, @playcount, @x_rank_count, @xh_rank_count, @s_rank_count, @sh_rank_count, @a_rank_count, @pp, @pos, @accuracy "
                                    + "FROM phpbb_users WHERE user_id = @user_id", stats);
