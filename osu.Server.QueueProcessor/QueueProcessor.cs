@@ -52,6 +52,12 @@ namespace osu.Server.QueueProcessor
                     {
                         try
                         {
+                            if (totalDequeued - totalProcessed > config.MaxInFlightItems)
+                            {
+                                Thread.Sleep(config.TimeBetweenPolls);
+                                continue;
+                            }
+
                             var redisValue = database.ListRightPop(inputQueueName);
 
                             if (!redisValue.HasValue)
