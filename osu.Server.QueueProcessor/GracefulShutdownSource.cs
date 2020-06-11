@@ -12,6 +12,8 @@ namespace osu.Server.QueueProcessor
 
         private readonly CancellationTokenSource cts;
 
+        public void Cancel() => cts.Cancel();
+
         public GracefulShutdownSource(in CancellationToken cancellation = default)
         {
             cts = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
