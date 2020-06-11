@@ -1,4 +1,4 @@
-﻿namespace ManiaKeyRankingProcessor
+﻿namespace osu.Server.Queues.ManiaKeyRankingProcessor
 {
     public class Program
     {

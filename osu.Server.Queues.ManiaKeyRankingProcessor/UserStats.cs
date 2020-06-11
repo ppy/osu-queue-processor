@@ -3,7 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace ManiaKeyRankingProcessor
+namespace osu.Server.Queues.ManiaKeyRankingProcessor
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class UserStats

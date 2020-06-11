@@ -7,7 +7,7 @@ using System.Linq;
 using Dapper;
 using osu.Server.QueueProcessor;
 
-namespace ManiaKeyRankingProcessor
+namespace osu.Server.Queues.ManiaKeyRankingProcessor
 {
     internal class ManiaKeyRankingProcessor : QueueProcessor<QueueItem>
     {
