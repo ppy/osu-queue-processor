@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -142,6 +143,62 @@ namespace QueueProcessorTests
             Assert.Equal(0, processor.GetQueueSize());
 
             output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
+        }
+
+        [Fact]
+        public void SendThenErrorDoesRetry()
+        {
+            var cts = new CancellationTokenSource(10000);
+
+            var obj = FakeData.New();
+            FakeData receivedObject = null;
+
+            bool didThrowOnce = false;
+
+            processor.PushToQueue(obj);
+
+            processor.Received += o =>
+            {
+                if (o.TotalRetries == 0)
+                {
+                    didThrowOnce = true;
+                    throw new Exception();
+                }
+
+                receivedObject = o;
+                cts.Cancel();
+            };
+
+            processor.Run(cts.Token);
+
+            Assert.True(didThrowOnce);
+            Assert.Equal(obj, receivedObject);
+        }
+
+        [Fact]
+        public void SendThenErrorForeverDoesDrop()
+        {
+            var cts = new CancellationTokenSource(10000);
+
+            var obj = FakeData.New();
+
+            int attemptCount = 0;
+
+            processor.PushToQueue(obj);
+
+            processor.Received += o =>
+            {
+                attemptCount++;
+                if (attemptCount > 3)
+                    cts.Cancel();
+
+                throw new Exception();
+            };
+
+            processor.Run(cts.Token);
+
+            Assert.Equal(4, attemptCount);
+            Assert.Equal(0, processor.GetQueueSize());
         }
     }
 }

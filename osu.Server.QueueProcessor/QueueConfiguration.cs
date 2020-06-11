@@ -16,5 +16,10 @@ namespace osu.Server.QueueProcessor
         /// The number of items allowed to be dequeued but not processed at one time.
         /// </summary>
         public int MaxInFlightItems { get; set; } = 100;
+
+        /// <summary>
+        /// The number of times to re-queue a failed item for another attempt.
+        /// </summary>
+        public int MaxRetries { get; set; } = 3;
     }
 }

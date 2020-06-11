@@ -7,7 +7,7 @@ using StackExchange.Redis;
 
 namespace osu.Server.QueueProcessor
 {
-    public abstract class QueueProcessor<T>
+    public abstract class QueueProcessor<T> where T : QueueItem
     {
         private readonly QueueConfiguration config;
 
@@ -51,6 +51,8 @@ namespace osu.Server.QueueProcessor
 
                     while (!cts.Token.IsCancellationRequested)
                     {
+                        T item = null;
+
                         try
                         {
                             if (totalInFlight > config.MaxInFlightItems)
@@ -68,23 +70,28 @@ namespace osu.Server.QueueProcessor
                             }
 
                             Interlocked.Increment(ref totalDequeued);
-                            var item = JsonConvert.DeserializeObject<T>(redisValue);
+                            item = JsonConvert.DeserializeObject<T>(redisValue);
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
                             Task.Factory.StartNew(() =>
                                 {
                                     ProcessResult(item);
-                                    Interlocked.Increment(ref totalProcessed);
                                 }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
                                 .ContinueWith(t =>
                                 {
+                                    Interlocked.Increment(ref totalProcessed);
+
                                     if (t.Exception != null)
+                                    {
                                         Console.WriteLine($"Error processing {item}: {t.Exception}");
+                                        attemptRetry(item);
+                                    }
                                 }, CancellationToken.None);
                         }
                         catch (Exception e)
                         {
                             Console.WriteLine($"Error processing from queue: {e}");
+                            attemptRetry(item);
                         }
                     }
 
@@ -93,6 +100,21 @@ namespace osu.Server.QueueProcessor
             }
 
             outputStats();
+        }
+
+        private void attemptRetry(T item)
+        {
+            if (item == null) return;
+
+            if (item.TotalRetries++ < config.MaxRetries)
+            {
+                Console.WriteLine($"Re-queueing for attempt {item.TotalRetries} / {config.MaxRetries}");
+                PushToQueue(item);
+            }
+            else
+            {
+                Console.WriteLine("Attempts exhausted; dropping item");
+            }
         }
 
         private void outputStats()

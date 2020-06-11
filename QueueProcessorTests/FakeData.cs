@@ -1,9 +1,9 @@
 using System;
+using osu.Server.QueueProcessor;
 
 namespace QueueProcessorTests
 {
-    [Serializable]
-    public class FakeData : IEquatable<FakeData>
+    public class FakeData : QueueItem, IEquatable<FakeData>
     {
         public readonly Guid Data;
 
