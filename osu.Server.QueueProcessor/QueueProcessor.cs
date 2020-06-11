@@ -5,11 +5,17 @@ using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using osu.Framework.Threading;
 using StackExchange.Redis;
+using StatsdClient;
 
 namespace osu.Server.QueueProcessor
 {
     public abstract class QueueProcessor<T> where T : QueueItem
     {
+        /// <summary>
+        /// Report statistics about this queue via datadog.
+        /// </summary>
+        protected DogStatsdService DogStatsd { get; }
+
         private readonly QueueConfiguration config;
 
         /// <summary>
@@ -37,6 +43,13 @@ namespace osu.Server.QueueProcessor
             const string queue_prefix = "osu-queue:";
 
             inputQueueName = $"{queue_prefix}{config.InputQueueName}";
+
+            DogStatsd = new DogStatsdService();
+            DogStatsd.Configure(new StatsdConfig
+            {
+                StatsdServerName = Environment.GetEnvironmentVariable("DD_AGENT_HOST") ?? "localhost",
+                Prefix = $"osu.server.queues.{config.InputQueueName}"
+            });
         }
 
         /// <summary>
@@ -78,6 +91,8 @@ namespace osu.Server.QueueProcessor
                             }
 
                             Interlocked.Increment(ref totalDequeued);
+                            DogStatsd.Increment("total_dequeued");
+
                             item = JsonConvert.DeserializeObject<T>(redisValue);
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
@@ -87,11 +102,19 @@ namespace osu.Server.QueueProcessor
                                     if (t.Exception == null)
                                     {
                                         Interlocked.Increment(ref totalProcessed);
+
+                                        // ReSharper disable once AccessToDisposedClosure
+                                        DogStatsd.Increment("total_processed");
+
                                         Interlocked.Exchange(ref consecutiveErrors, 0);
                                     }
                                     else
                                     {
                                         Interlocked.Increment(ref totalErrors);
+
+                                        // ReSharper disable once AccessToDisposedClosure
+                                        DogStatsd.Increment("total_errors");
+
                                         Interlocked.Increment(ref consecutiveErrors);
 
                                         Console.WriteLine($"Error processing {item}: {t.Exception}");
@@ -111,6 +134,7 @@ namespace osu.Server.QueueProcessor
                 }
             }
 
+            DogStatsd.Dispose();
             outputStats();
         }
 
@@ -131,6 +155,7 @@ namespace osu.Server.QueueProcessor
 
         private void outputStats()
         {
+            DogStatsd.Gauge("in_flight", totalInFlight);
             Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed} errors:{totalErrors}");
         }
 
