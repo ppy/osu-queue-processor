@@ -21,5 +21,13 @@ namespace osu.Server.QueueProcessor
         /// The number of times to re-queue a failed item for another attempt.
         /// </summary>
         public int MaxRetries { get; set; } = 3;
+
+        /// <summary>
+        /// The maximum number of recent errors before exiting with an error.
+        /// </summary>
+        /// <remarks>
+        /// Every error will increment an internal count, while every success will decrement it.
+        /// </remarks>
+        public int ErrorThreshold { get; set; } = 10;
     }
 }

@@ -24,7 +24,11 @@ namespace osu.Server.QueueProcessor
 
         private long totalDequeued;
 
-        private long totalInFlight => totalDequeued - totalProcessed;
+        private long totalErrors;
+
+        private int consecutiveErrors;
+
+        private long totalInFlight => totalDequeued - totalProcessed - totalErrors;
 
         protected QueueProcessor(QueueConfiguration config)
         {
@@ -52,11 +56,14 @@ namespace osu.Server.QueueProcessor
 
                     while (!cts.Token.IsCancellationRequested)
                     {
+                        if (consecutiveErrors > config.ErrorThreshold)
+                            throw new Exception("Error threshold exceeded, shutting down");
+
                         T item = null;
 
                         try
                         {
-                            if (totalInFlight > config.MaxInFlightItems)
+                            if (totalInFlight > config.MaxInFlightItems || consecutiveErrors > config.ErrorThreshold)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;
@@ -74,16 +81,19 @@ namespace osu.Server.QueueProcessor
                             item = JsonConvert.DeserializeObject<T>(redisValue);
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
-                            Task.Factory.StartNew(() =>
-                                {
-                                    ProcessResult(item);
-                                }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
+                            Task.Factory.StartNew(() => { ProcessResult(item); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
                                 .ContinueWith(t =>
                                 {
-                                    Interlocked.Increment(ref totalProcessed);
-
-                                    if (t.Exception != null)
+                                    if (t.Exception == null)
                                     {
+                                        Interlocked.Increment(ref totalProcessed);
+                                        Interlocked.Exchange(ref consecutiveErrors, 0);
+                                    }
+                                    else
+                                    {
+                                        Interlocked.Increment(ref totalErrors);
+                                        Interlocked.Increment(ref consecutiveErrors);
+
                                         Console.WriteLine($"Error processing {item}: {t.Exception}");
                                         attemptRetry(item);
                                     }
@@ -91,6 +101,7 @@ namespace osu.Server.QueueProcessor
                         }
                         catch (Exception e)
                         {
+                            Interlocked.Increment(ref consecutiveErrors);
                             Console.WriteLine($"Error processing from queue: {e}");
                             attemptRetry(item);
                         }
@@ -120,7 +131,7 @@ namespace osu.Server.QueueProcessor
 
         private void outputStats()
         {
-            Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed}");
+            Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed} errors:{totalErrors}");
         }
 
         public void PushToQueue(T obj) =>

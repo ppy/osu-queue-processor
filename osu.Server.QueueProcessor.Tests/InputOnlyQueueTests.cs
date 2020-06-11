@@ -200,5 +200,30 @@ namespace osu.Server.QueueProcessor.Tests
             Assert.Equal(4, attemptCount);
             Assert.Equal(0, processor.GetQueueSize());
         }
+
+        [Fact]
+        public void ExitOnErrorThresholdHit()
+        {
+            var cts = new CancellationTokenSource(10000);
+
+            int attemptCount = 0;
+
+            // 3 retries for each, so at least one should remain in queue.
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+
+            processor.Received += o =>
+            {
+                attemptCount++;
+                throw new Exception();
+            };
+
+            Assert.Throws<Exception>(() => processor.Run(cts.Token));
+
+            Assert.True(attemptCount >= 10, "attemptCount >= 10");
+            Assert.NotEqual(0, processor.GetQueueSize());
+        }
     }
 }
