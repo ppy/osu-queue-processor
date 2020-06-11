@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using osu.Framework.Logging;
 using osu.Framework.Threading;
 using StackExchange.Redis;
 
@@ -44,7 +43,7 @@ namespace osu.Server.QueueProcessor
             using (new Timer(_ => outputStats(), null, TimeSpan.Zero, TimeSpan.FromSeconds(5)))
             using (var cts = new GracefulShutdownSource(cancellation))
             {
-                Logger.Log($"Starting queue processing (Backlog of {GetQueueSize()})..");
+                Console.WriteLine($"Starting queue processing (Backlog of {GetQueueSize()})..");
 
                 using (var threadPool = new ThreadedTaskScheduler(Environment.ProcessorCount, "workers"))
                 {
@@ -80,16 +79,16 @@ namespace osu.Server.QueueProcessor
                                 .ContinueWith(t =>
                                 {
                                     if (t.Exception != null)
-                                        Logger.Error(t.Exception, $"Error processing {item}");
+                                        Console.WriteLine($"Error processing {item}: {t.Exception}");
                                 }, CancellationToken.None);
                         }
                         catch (Exception e)
                         {
-                            Logger.Error(e, "Error processing from queue");
+                            Console.WriteLine($"Error processing from queue: {e}");
                         }
                     }
 
-                    Logger.Log("Shutting down..");
+                    Console.WriteLine("Shutting down..");
                 }
             }
 
@@ -98,7 +97,7 @@ namespace osu.Server.QueueProcessor
 
         private void outputStats()
         {
-            Logger.Log($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed}");
+            Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed}");
         }
 
         public void PushToQueue(T obj) =>
