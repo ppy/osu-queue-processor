@@ -11,6 +11,11 @@ namespace osu.Server.QueueProcessor
 {
     public abstract class QueueProcessor<T> where T : QueueItem
     {
+        /// <summary>
+        /// Report statistics about this queue via datadog.
+        /// </summary>
+        protected DogStatsdService DogStatsd { get; }
+
         private readonly QueueConfiguration config;
 
         /// <summary>
@@ -39,6 +44,7 @@ namespace osu.Server.QueueProcessor
 
             inputQueueName = $"{queue_prefix}{config.InputQueueName}";
 
+            DogStatsd = new DogStatsdService();
             DogStatsd.Configure(new StatsdConfig
             {
                 StatsdServerName = Environment.GetEnvironmentVariable("DD_AGENT_HOST") ?? "localhost",
@@ -96,6 +102,8 @@ namespace osu.Server.QueueProcessor
                                     if (t.Exception == null)
                                     {
                                         Interlocked.Increment(ref totalProcessed);
+
+                                        // ReSharper disable once AccessToDisposedClosure
                                         DogStatsd.Increment("total_processed");
 
                                         Interlocked.Exchange(ref consecutiveErrors, 0);
@@ -103,6 +111,8 @@ namespace osu.Server.QueueProcessor
                                     else
                                     {
                                         Interlocked.Increment(ref totalErrors);
+
+                                        // ReSharper disable once AccessToDisposedClosure
                                         DogStatsd.Increment("total_errors");
 
                                         Interlocked.Increment(ref consecutiveErrors);
@@ -124,6 +134,7 @@ namespace osu.Server.QueueProcessor
                 }
             }
 
+            DogStatsd.Dispose();
             outputStats();
         }
 
