@@ -1,7 +1,6 @@
 using System;
-using osu.Server.QueueProcessor;
 
-namespace QueueProcessorTests
+namespace osu.Server.QueueProcessor.Tests
 {
     public class FakeData : QueueItem, IEquatable<FakeData>
     {

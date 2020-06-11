@@ -6,7 +6,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Assert = Xunit.Assert;
 
-namespace QueueProcessorTests
+namespace osu.Server.QueueProcessor.Tests
 {
     public class InputOnlyQueueTests
     {

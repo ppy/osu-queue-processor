@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.QueueProcessor", "osu.Server.QueueProcessor\osu.Server.QueueProcessor.csproj", "{2601BC23-DAD3-46CA-861B-5D2386631939}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueProcessorTests", "QueueProcessorTests\QueueProcessorTests.csproj", "{844442F7-C058-42A6-9217-433D9663C9F6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.QueueProcessor.Tests", "osu.Server.QueueProcessor.Tests\osu.Server.QueueProcessor.Tests.csproj", "{844442F7-C058-42A6-9217-433D9663C9F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
