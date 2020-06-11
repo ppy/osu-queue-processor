@@ -2,11 +2,12 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Diagnostics.CodeAnalysis;
+using osu.Server.QueueProcessor;
 
 namespace osu.Server.Queues.ManiaKeyRankingProcessor
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class QueueItem
+    public class ScoreItem : QueueItem
     {
         public int score_id { get; set; }
 

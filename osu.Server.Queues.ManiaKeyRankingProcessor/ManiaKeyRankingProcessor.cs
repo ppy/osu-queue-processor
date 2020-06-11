@@ -9,14 +9,14 @@ using osu.Server.QueueProcessor;
 
 namespace osu.Server.Queues.ManiaKeyRankingProcessor
 {
-    internal class ManiaKeyRankingProcessor : QueueProcessor<QueueItem>
+    internal class ManiaKeyRankingProcessor : QueueProcessor<ScoreItem>
     {
         public ManiaKeyRankingProcessor()
             : base(new QueueConfiguration { InputQueueName = "mania4k7k" })
         {
         }
 
-        protected override void ProcessResult(QueueItem item)
+        protected override void ProcessResult(ScoreItem item)
         {
             using (var db = GetDatabaseConnection())
             {
