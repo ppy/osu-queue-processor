@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using osu.Framework.Threading;
 using StackExchange.Redis;
@@ -129,6 +130,16 @@ namespace osu.Server.QueueProcessor
             redis.GetDatabase().ListLength(inputQueueName);
 
         public void ClearQueue() => redis.GetDatabase().KeyDelete(inputQueueName);
+
+        protected MySqlConnection GetDatabaseConnection()
+        {
+            string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "db");
+            string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "www");
+
+            var connection = new MySqlConnection($"Server={host};Database=osu;User ID={user};ConnectionTimeout=5;");
+            connection.Open();
+            return connection;
+        }
 
         /// <summary>
         /// Implement to process a single item from the queue.

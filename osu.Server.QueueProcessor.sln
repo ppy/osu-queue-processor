@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.QueueProcessor",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.QueueProcessor.Tests", "osu.Server.QueueProcessor.Tests\osu.Server.QueueProcessor.Tests.csproj", "{844442F7-C058-42A6-9217-433D9663C9F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "osu.Server.Queues.ManiaKeyRankingProcessor", "osu.Server.Queues.ManiaKeyRankingProcessor\osu.Server.Queues.ManiaKeyRankingProcessor.csproj", "{6504492D-D8E1-464C-AD66-9A90C06DCA4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{844442F7-C058-42A6-9217-433D9663C9F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{844442F7-C058-42A6-9217-433D9663C9F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{844442F7-C058-42A6-9217-433D9663C9F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6504492D-D8E1-464C-AD66-9A90C06DCA4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6504492D-D8E1-464C-AD66-9A90C06DCA4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6504492D-D8E1-464C-AD66-9A90C06DCA4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6504492D-D8E1-464C-AD66-9A90C06DCA4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
