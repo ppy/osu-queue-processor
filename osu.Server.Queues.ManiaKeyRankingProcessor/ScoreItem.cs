@@ -9,7 +9,7 @@ namespace osu.Server.Queues.ManiaKeyRankingProcessor
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class ScoreItem : QueueItem
     {
-        public int score_id { get; set; }
+        public long score_id { get; set; }
 
         public bool high { get; set; }
 
