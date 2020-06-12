@@ -8,11 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\osu.Server.QueueProcessor\osu.Server.QueueProcessor.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Dapper" Version="2.0.35" />
+      <PackageReference Include="ppy.osu.Server.OsuQueueProcessor" Version="2020.611.1" />
     </ItemGroup>
 
 </Project>
