@@ -155,8 +155,15 @@ namespace osu.Server.QueueProcessor
 
         private void outputStats()
         {
-            DogStatsd.Gauge("in_flight", totalInFlight);
-            Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed} errors:{totalErrors}");
+            try
+            {
+                DogStatsd.Gauge("in_flight", totalInFlight);
+                Console.WriteLine($"stats: queue:{GetQueueSize()} inflight:{totalInFlight} dequeued:{totalDequeued} processed:{totalProcessed} errors:{totalErrors}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error outputting stats: {e}");
+            }
         }
 
         public void PushToQueue(T obj) =>
