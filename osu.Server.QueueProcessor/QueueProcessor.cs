@@ -179,7 +179,7 @@ namespace osu.Server.QueueProcessor
             string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
             string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
 
-            var connection = new MySqlConnection($"Server={host};Database=osu;User ID={user};ConnectionTimeout=5;");
+            var connection = new MySqlConnection($"Server={host};Database=osu;User ID={user};ConnectionTimeout=5;ConnectionReset=false;Pooling=true;");
             connection.Open();
             return connection;
         }
