@@ -174,7 +174,10 @@ namespace osu.Server.QueueProcessor
 
         public void ClearQueue() => redis.GetDatabase().KeyDelete(inputQueueName);
 
-        protected MySqlConnection GetDatabaseConnection()
+        /// <summary>
+        /// Retrieve a database connection.
+        /// </summary>
+        public static MySqlConnection GetDatabaseConnection()
         {
             string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
             string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
