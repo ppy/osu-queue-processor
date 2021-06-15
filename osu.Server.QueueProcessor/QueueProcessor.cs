@@ -177,7 +177,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Retrieve a database connection.
         /// </summary>
-        public MySqlConnection GetDatabaseConnection()
+        public virtual MySqlConnection GetDatabaseConnection()
         {
             string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
             string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
