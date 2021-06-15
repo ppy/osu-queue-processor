@@ -12,6 +12,24 @@ namespace osu.Server.QueueProcessor
     public abstract class QueueProcessor<T> where T : QueueItem
     {
         /// <summary>
+        /// The total queue items processed since startup.
+        /// </summary>
+        public long TotalProcessed => totalProcessed;
+
+        /// <summary>
+        /// The total queue items dequeued since startup.
+        /// </summary>
+        public long TotalDequeued => totalDequeued;
+
+        /// <summary>
+        /// The total errors encountered processing items since startup.
+        /// </summary>
+        /// <remarks>
+        /// Note that this may include more than one error from the same queue item failing multiple times.
+        /// </remarks>
+        public long TotalErrors => totalErrors;
+
+        /// <summary>
         /// Report statistics about this queue via datadog.
         /// </summary>
         protected DogStatsdService DogStatsd { get; }
