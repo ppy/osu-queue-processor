@@ -14,6 +14,6 @@ namespace osu.Server.QueueProcessor.Tests
 
         protected override void ProcessResult(FakeData result) => Received?.Invoke(result);
 
-        public Action<FakeData> Received;
+        public Action<FakeData>? Received;
     }
 }

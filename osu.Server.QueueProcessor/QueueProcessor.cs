@@ -90,7 +90,7 @@ namespace osu.Server.QueueProcessor
                         if (consecutiveErrors > config.ErrorThreshold)
                             throw new Exception("Error threshold exceeded, shutting down");
 
-                        T item = null;
+                        T item;
 
                         try
                         {
@@ -111,7 +111,7 @@ namespace osu.Server.QueueProcessor
                             Interlocked.Increment(ref totalDequeued);
                             DogStatsd.Increment("total_dequeued");
 
-                            item = JsonConvert.DeserializeObject<T>(redisValue);
+                            item = JsonConvert.DeserializeObject<T>(redisValue) ?? throw new InvalidOperationException("Dequeued item could not be deserialised.");
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
                             Task.Factory.StartNew(() => { ProcessResult(item); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
@@ -143,8 +143,7 @@ namespace osu.Server.QueueProcessor
                         catch (Exception e)
                         {
                             Interlocked.Increment(ref consecutiveErrors);
-                            Console.WriteLine($"Error processing from queue: {e}");
-                            attemptRetry(item);
+                            Console.WriteLine($"Error dequeueing from queue: {e}");
                         }
                     }
 
@@ -158,8 +157,6 @@ namespace osu.Server.QueueProcessor
 
         private void attemptRetry(T item)
         {
-            if (item == null) return;
-
             if (item.TotalRetries++ < config.MaxRetries)
             {
                 Console.WriteLine($"Re-queueing for attempt {item.TotalRetries} / {config.MaxRetries}");

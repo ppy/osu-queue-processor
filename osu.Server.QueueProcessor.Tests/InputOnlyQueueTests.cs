@@ -27,7 +27,8 @@ namespace osu.Server.QueueProcessor.Tests
             var cts = new CancellationTokenSource(10000);
 
             var obj = FakeData.New();
-            FakeData receivedObject = null;
+
+            FakeData? receivedObject = null;
 
             processor.PushToQueue(obj);
 
@@ -151,7 +152,8 @@ namespace osu.Server.QueueProcessor.Tests
             var cts = new CancellationTokenSource(10000);
 
             var obj = FakeData.New();
-            FakeData receivedObject = null;
+
+            FakeData? receivedObject = null;
 
             bool didThrowOnce = false;
 

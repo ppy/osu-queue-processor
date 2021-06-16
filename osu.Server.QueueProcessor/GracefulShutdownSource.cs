@@ -24,7 +24,7 @@ namespace osu.Server.QueueProcessor
             Console.CancelKeyPress += onCancelKeyPress;
         }
 
-        private void onCancelKeyPress(object sender, ConsoleCancelEventArgs args)
+        private void onCancelKeyPress(object? sender, ConsoleCancelEventArgs args)
         {
             args.Cancel = true;
             cts.Cancel();

@@ -7,6 +7,7 @@
         <Authors>Dean Herbert</Authors>
         <Company>ppy Pty Ltd</Company>
         <RepositoryUrl>https://github.com/ppy/osu-queue-processor</RepositoryUrl>
+        <nullable>enable</nullable>
     </PropertyGroup>
 
     <ItemGroup>

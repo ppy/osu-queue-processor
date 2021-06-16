@@ -15,7 +15,7 @@ namespace osu.Server.QueueProcessor.Tests
 
         public override string ToString() => Data.ToString();
 
-        public bool Equals(FakeData other)
+        public bool Equals(FakeData? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -23,7 +23,7 @@ namespace osu.Server.QueueProcessor.Tests
             return Data.Equals(other.Data);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
