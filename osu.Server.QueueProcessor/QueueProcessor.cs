@@ -114,7 +114,10 @@ namespace osu.Server.QueueProcessor
                             item = JsonConvert.DeserializeObject<T>(redisValue) ?? throw new InvalidOperationException("Dequeued item could not be deserialised.");
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
-                            Task.Factory.StartNew(() => { ProcessResult(item); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
+                            Task.Factory.StartNew(() =>
+                                {
+                                    ProcessResult(item);
+                                }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
                                 .ContinueWith(t =>
                                 {
                                     if (t.Exception == null)
@@ -122,7 +125,7 @@ namespace osu.Server.QueueProcessor
                                         Interlocked.Increment(ref totalProcessed);
 
                                         // ReSharper disable once AccessToDisposedClosure
-                                        DogStatsd.Increment("total_processed");
+                                        DogStatsd.Increment("total_processed", tags: item.Tags);
 
                                         Interlocked.Exchange(ref consecutiveErrors, 0);
                                     }
@@ -131,7 +134,7 @@ namespace osu.Server.QueueProcessor
                                         Interlocked.Increment(ref totalErrors);
 
                                         // ReSharper disable once AccessToDisposedClosure
-                                        DogStatsd.Increment("total_errors");
+                                        DogStatsd.Increment("total_errors", tags: item.Tags);
 
                                         Interlocked.Increment(ref consecutiveErrors);
 
