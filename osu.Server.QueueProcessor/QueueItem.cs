@@ -11,7 +11,7 @@ namespace osu.Server.QueueProcessor
     [Serializable]
     public abstract class QueueItem
     {
-        public int TotalRetries { get; internal set; }
+        public int TotalRetries { get; set; }
 
         /// <summary>
         /// Tags which will be used for tracking a processed item.
