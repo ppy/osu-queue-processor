@@ -39,6 +39,7 @@ namespace osu.Server.QueueProcessor
         public void Dispose()
         {
             shutdownComplete.Set();
+            Console.CancelKeyPress -= onCancelKeyPress;
         }
     }
 }
