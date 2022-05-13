@@ -101,6 +101,7 @@ namespace osu.Server.QueueProcessor
 
                             var redisItems = database.ListRightPop(inputQueueName, config.BatchSize);
 
+                            // null or empty check is required for redis 6.x. 7.x reports `null` instead.
                             if (redisItems == null || redisItems.Length == 0 || redisItems[0].IsNullOrEmpty)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
