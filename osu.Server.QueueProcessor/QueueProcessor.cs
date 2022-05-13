@@ -101,7 +101,7 @@ namespace osu.Server.QueueProcessor
 
                             var redisItems = database.ListRightPop(inputQueueName, config.BatchSize);
 
-                            if (redisItems == null || redisItems.Length == 0)
+                            if (redisItems == null || redisItems.Length == 0 || redisItems[0].IsNullOrEmpty)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;

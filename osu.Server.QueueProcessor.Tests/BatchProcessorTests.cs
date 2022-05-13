@@ -23,6 +23,15 @@ public class BatchProcessorTests
         processor.ClearQueue();
     }
 
+    /// <summary>
+    /// Checking that processing an empty queue works as expected.
+    /// </summary>
+    [Fact]
+    public void ProcessEmptyQueue()
+    {
+        processor.Run(new CancellationTokenSource(1000).Token);
+    }
+
     [Fact]
     public void SendThenReceive_Single()
     {
