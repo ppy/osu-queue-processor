@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Runtime.Serialization;
 
 namespace osu.Server.QueueProcessor
 {
@@ -11,6 +12,15 @@ namespace osu.Server.QueueProcessor
     [Serializable]
     public abstract class QueueItem
     {
+        /// <summary>
+        /// Set to <c>true</c> to mark this item is failed. This will cause it to be retried.
+        /// </summary>
+        [IgnoreDataMember]
+        public bool Failed { get; set; }
+
+        /// <summary>
+        /// The number of times processing this item has been retried. Handled internally by <see cref="QueueProcessor{T}"/>.
+        /// </summary>
         public int TotalRetries { get; set; }
 
         /// <summary>
