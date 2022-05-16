@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MySqlConnector;
@@ -101,22 +102,27 @@ namespace osu.Server.QueueProcessor
 
                             var redisItems = database.ListRightPop(inputQueueName, config.BatchSize);
 
-                            // null or empty check is required for redis 6.x. 7.x reports `null` instead.
-                            if (redisItems == null || redisItems.Length == 0 || redisItems[0].IsNullOrEmpty)
+                            // queue doesn't exist.
+                            if (redisItems == null)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;
                             }
 
-                            Interlocked.Increment(ref totalDequeued);
-                            DogStatsd.Increment("total_dequeued");
-
                             List<T> items = new List<T>();
 
-                            foreach (var redisItem in redisItems)
-                            {
+                            // null or empty check is required for redis 6.x. 7.x reports `null` instead.
+                            foreach (var redisItem in redisItems.Where(i => !i.IsNullOrEmpty))
                                 items.Add(JsonConvert.DeserializeObject<T>(redisItem) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
+
+                            if (items.Count == 0)
+                            {
+                                Thread.Sleep(config.TimeBetweenPolls);
+                                continue;
                             }
+
+                            Interlocked.Add(ref totalDequeued, items.Count);
+                            DogStatsd.Increment("total_dequeued", items.Count);
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
                             Task.Factory.StartNew(() => { ProcessResults(items); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
