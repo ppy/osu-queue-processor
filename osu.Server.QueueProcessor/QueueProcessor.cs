@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MySqlConnector;
@@ -90,8 +92,6 @@ namespace osu.Server.QueueProcessor
                         if (consecutiveErrors > config.ErrorThreshold)
                             throw new Exception("Error threshold exceeded, shutting down");
 
-                        T item;
-
                         try
                         {
                             if (totalInFlight > config.MaxInFlightItems || consecutiveErrors > config.ErrorThreshold)
@@ -100,46 +100,57 @@ namespace osu.Server.QueueProcessor
                                 continue;
                             }
 
-                            var redisValue = database.ListRightPop(inputQueueName);
+                            var redisItems = database.ListRightPop(inputQueueName, config.BatchSize);
 
-                            if (!redisValue.HasValue)
+                            // queue doesn't exist.
+                            if (redisItems == null)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;
                             }
 
-                            Interlocked.Increment(ref totalDequeued);
-                            DogStatsd.Increment("total_dequeued");
+                            List<T> items = new List<T>();
 
-                            item = JsonConvert.DeserializeObject<T>(redisValue) ?? throw new InvalidOperationException("Dequeued item could not be deserialised.");
+                            // null or empty check is required for redis 6.x. 7.x reports `null` instead.
+                            foreach (var redisItem in redisItems.Where(i => !i.IsNullOrEmpty))
+                                items.Add(JsonConvert.DeserializeObject<T>(redisItem) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
+
+                            if (items.Count == 0)
+                            {
+                                Thread.Sleep(config.TimeBetweenPolls);
+                                continue;
+                            }
+
+                            Interlocked.Add(ref totalDequeued, items.Count);
+                            DogStatsd.Increment("total_dequeued", items.Count);
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
-                            Task.Factory.StartNew(() =>
-                                {
-                                    ProcessResult(item);
-                                }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
+                            Task.Factory.StartNew(() => { ProcessResults(items); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
                                 .ContinueWith(t =>
                                 {
-                                    if (t.Exception == null)
+                                    foreach (var item in items)
                                     {
-                                        Interlocked.Increment(ref totalProcessed);
+                                        if (t.Exception != null || item.Failed)
+                                        {
+                                            Interlocked.Increment(ref totalErrors);
 
-                                        // ReSharper disable once AccessToDisposedClosure
-                                        DogStatsd.Increment("total_processed", tags: item.Tags);
+                                            // ReSharper disable once AccessToDisposedClosure
+                                            DogStatsd.Increment("total_errors", tags: item.Tags);
 
-                                        Interlocked.Exchange(ref consecutiveErrors, 0);
-                                    }
-                                    else
-                                    {
-                                        Interlocked.Increment(ref totalErrors);
+                                            Interlocked.Increment(ref consecutiveErrors);
 
-                                        // ReSharper disable once AccessToDisposedClosure
-                                        DogStatsd.Increment("total_errors", tags: item.Tags);
+                                            Console.WriteLine($"Error processing {item}: {t.Exception}");
+                                            attemptRetry(item);
+                                        }
+                                        else
+                                        {
+                                            Interlocked.Increment(ref totalProcessed);
 
-                                        Interlocked.Increment(ref consecutiveErrors);
+                                            // ReSharper disable once AccessToDisposedClosure
+                                            DogStatsd.Increment("total_processed", tags: item.Tags);
 
-                                        Console.WriteLine($"Error processing {item}: {t.Exception}");
-                                        attemptRetry(item);
+                                            Interlocked.Exchange(ref consecutiveErrors, 0);
+                                        }
                                     }
                                 }, CancellationToken.None);
                         }
@@ -160,6 +171,8 @@ namespace osu.Server.QueueProcessor
 
         private void attemptRetry(T item)
         {
+            item.Failed = false;
+
             if (item.TotalRetries++ < config.MaxRetries)
             {
                 Console.WriteLine($"Re-queueing for attempt {item.TotalRetries} / {config.MaxRetries}");
@@ -214,9 +227,21 @@ namespace osu.Server.QueueProcessor
         }
 
         /// <summary>
-        /// Implement to process a single item from the queue.
+        /// Implement to process a single item from the queue. Will only be invoked if <see cref="ProcessResults"/> is not implemented.
         /// </summary>
         /// <param name="item">The item to process.</param>
-        protected abstract void ProcessResult(T item);
+        protected virtual void ProcessResult(T item)
+        {
+        }
+
+        /// <summary>
+        /// Implement to process batches of items from the queue.
+        /// </summary>
+        /// <param name="items">The items to process.</param>
+        protected virtual void ProcessResults(IEnumerable<T> items)
+        {
+            foreach (var item in items)
+                ProcessResult(item);
+        }
     }
 }

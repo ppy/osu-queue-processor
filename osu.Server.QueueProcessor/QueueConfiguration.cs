@@ -29,5 +29,10 @@ namespace osu.Server.QueueProcessor
         /// Every error will increment an internal count, while every success will decrement it.
         /// </remarks>
         public int ErrorThreshold { get; set; } = 10;
+
+        /// <summary>
+        /// Setting above 1 will allow processing in batches (see <see cref="QueueProcessor{T}.ProcessResults"/>).
+        /// </summary>
+        public int BatchSize { get; set; } = 1;
     }
 }
