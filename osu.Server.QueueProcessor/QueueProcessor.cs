@@ -210,10 +210,21 @@ namespace osu.Server.QueueProcessor
         /// </summary>
         public virtual MySqlConnection GetDatabaseConnection()
         {
-            string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
-            string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
+            string connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? String.Empty;
 
-            var connection = new MySqlConnection($"Server={host};Database=osu;User ID={user};ConnectionTimeout=5;ConnectionReset=false;Pooling=true;");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
+                string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
+                string password = (Environment.GetEnvironmentVariable("DB_PASS") ?? string.Empty);
+                string name = (Environment.GetEnvironmentVariable("DB_NAME") ?? "osu");
+
+                string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
+
+                connectionString = $"Server={host};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling=true;";
+            }
+
+            var connection = new MySqlConnection(connectionString);
             connection.Open();
 
             // TODO: remove this when we have set a saner time zone server-side.
