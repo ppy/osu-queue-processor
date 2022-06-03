@@ -32,6 +32,11 @@ namespace osu.Server.QueueProcessor
         public long TotalErrors => totalErrors;
 
         /// <summary>
+        /// The name of this queue, as provided by <see cref="QueueConfiguration"/>.
+        /// </summary>
+        public string QueueName { get; }
+
+        /// <summary>
         /// Report statistics about this queue via datadog.
         /// </summary>
         protected DogStatsdService DogStatsd { get; }
@@ -43,8 +48,6 @@ namespace osu.Server.QueueProcessor
         /// </summary>
         private readonly ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
             Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis");
-
-        private readonly string inputQueueName;
 
         private long totalProcessed;
 
@@ -62,7 +65,7 @@ namespace osu.Server.QueueProcessor
 
             const string queue_prefix = "osu-queue:";
 
-            inputQueueName = $"{queue_prefix}{config.InputQueueName}";
+            QueueName = $"{queue_prefix}{config.InputQueueName}";
 
             DogStatsd = new DogStatsdService();
             DogStatsd.Configure(new StatsdConfig
@@ -100,7 +103,7 @@ namespace osu.Server.QueueProcessor
                                 continue;
                             }
 
-                            var redisItems = database.ListRightPop(inputQueueName, config.BatchSize);
+                            var redisItems = database.ListRightPop(QueueName, config.BatchSize);
 
                             // queue doesn't exist.
                             if (redisItems == null)
@@ -198,12 +201,12 @@ namespace osu.Server.QueueProcessor
         }
 
         public void PushToQueue(T obj) =>
-            redis.GetDatabase().ListLeftPush(inputQueueName, JsonConvert.SerializeObject(obj));
+            redis.GetDatabase().ListLeftPush(QueueName, JsonConvert.SerializeObject(obj));
 
         public long GetQueueSize() =>
-            redis.GetDatabase().ListLength(inputQueueName);
+            redis.GetDatabase().ListLength(QueueName);
 
-        public void ClearQueue() => redis.GetDatabase().KeyDelete(inputQueueName);
+        public void ClearQueue() => redis.GetDatabase().KeyDelete(QueueName);
 
         /// <summary>
         /// Retrieve a database connection.
