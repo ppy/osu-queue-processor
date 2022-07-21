@@ -93,8 +93,11 @@ namespace osu.Server.QueueProcessor.Tests
                 }
             };
 
+            const int run_count = 5;
+
             // start and stop processing multiple times, checking items are in a good state each time.
-            for (int i = 0; i < 5; i++)
+
+            for (int i = 0; i < run_count; i++)
             {
                 var cts = new CancellationTokenSource();
 
@@ -114,7 +117,11 @@ namespace osu.Server.QueueProcessor.Tests
                     }
                 }, CancellationToken.None);
 
-                var receiveTask = Task.Run(() => processor.Run((cts = new CancellationTokenSource()).Token), CancellationToken.None);
+                // Ensure there are some items in the queue before starting the processor.
+                while (inFlightObjects.Count < 1000)
+                    Thread.Sleep(100);
+
+                var receiveTask = Task.Run(() => processor.Run(cts.Token), CancellationToken.None);
 
                 Thread.Sleep(1000);
 
@@ -124,8 +131,6 @@ namespace osu.Server.QueueProcessor.Tests
                 receiveTask.Wait(10000);
 
                 output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
-
-                Assert.Equal(inFlightObjects.Count, processor.GetQueueSize());
             }
 
             var finalCts = new CancellationTokenSource(10000);
