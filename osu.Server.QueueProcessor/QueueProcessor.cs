@@ -165,6 +165,14 @@ namespace osu.Server.QueueProcessor
                     }
 
                     Console.WriteLine("Shutting down..");
+
+                    while (totalInFlight > 0)
+                    {
+                        Console.WriteLine($"Waiting for remaining {totalInFlight} in-flight items...");
+                        Thread.Sleep(5000);
+                    }
+
+                    Console.WriteLine("Bye!");
                 }
             }
 
