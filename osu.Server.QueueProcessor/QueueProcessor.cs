@@ -208,8 +208,19 @@ namespace osu.Server.QueueProcessor
             }
         }
 
-        public void PushToQueue(T obj) =>
-            redis.GetDatabase().ListLeftPush(QueueName, JsonConvert.SerializeObject(obj));
+        /// <summary>
+        /// Push a single item to the queue.
+        /// </summary>
+        /// <param name="item"></param>
+        public void PushToQueue(T item) =>
+            redis.GetDatabase().ListLeftPush(QueueName, JsonConvert.SerializeObject(item));
+
+        /// <summary>
+        /// Push multiple items to the queue.
+        /// </summary>
+        /// <param name="items"></param>
+        public void PushToQueue(IEnumerable<T> items) =>
+            redis.GetDatabase().ListLeftPush(QueueName, items.Select(obj => new RedisValue(JsonConvert.SerializeObject(obj))).ToArray());
 
         public long GetQueueSize() =>
             redis.GetDatabase().ListLength(QueueName);

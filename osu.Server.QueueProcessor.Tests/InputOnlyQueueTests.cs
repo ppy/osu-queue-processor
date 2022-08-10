@@ -73,6 +73,35 @@ namespace osu.Server.QueueProcessor.Tests
             Assert.Equal(objects, receivedObjects);
         }
 
+        [Fact]
+        public void SendThenReceive_MultipleUsingSingleCall()
+        {
+            const int send_count = 10000;
+
+            var cts = new CancellationTokenSource(10000);
+
+            var objects = new HashSet<FakeData>();
+            for (int i = 0; i < send_count; i++)
+                objects.Add(FakeData.New());
+
+            var receivedObjects = new HashSet<FakeData>();
+
+            processor.PushToQueue(objects);
+
+            processor.Received += o =>
+            {
+                lock (receivedObjects)
+                    receivedObjects.Add(o);
+
+                if (receivedObjects.Count == send_count)
+                    cts.Cancel();
+            };
+
+            processor.Run(cts.Token);
+
+            Assert.Equal(objects, receivedObjects);
+        }
+
         /// <summary>
         /// If the processor is cancelled mid-operation, every item should either be processed or still in the queue.
         /// </summary>
