@@ -97,7 +97,7 @@ namespace osu.Server.QueueProcessor
 
                         try
                         {
-                            if (totalInFlight > config.MaxInFlightItems || consecutiveErrors > config.ErrorThreshold)
+                            if (totalInFlight >= config.MaxInFlightItems || consecutiveErrors > config.ErrorThreshold)
                             {
                                 Thread.Sleep(config.TimeBetweenPolls);
                                 continue;
