@@ -31,6 +31,8 @@ namespace osu.Server.QueueProcessor
         /// </remarks>
         public long TotalErrors => totalErrors;
 
+        public event Action<Exception?, T> Error;
+
         /// <summary>
         /// The name of this queue, as provided by <see cref="QueueConfiguration"/>.
         /// </summary>
@@ -141,6 +143,8 @@ namespace osu.Server.QueueProcessor
                                             DogStatsd.Increment("total_errors", tags: item.Tags);
 
                                             Interlocked.Increment(ref consecutiveErrors);
+
+                                            Error?.Invoke(t.Exception, item);
 
                                             Console.WriteLine($"Error processing {item}: {t.Exception}");
                                             attemptRetry(item);
