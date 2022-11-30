@@ -31,7 +31,7 @@ namespace osu.Server.QueueProcessor
         /// </remarks>
         public long TotalErrors => totalErrors;
 
-        public event Action<Exception?, T> Error;
+        public event Action<Exception?, T>? Error;
 
         /// <summary>
         /// The name of this queue, as provided by <see cref="QueueConfiguration"/>.
