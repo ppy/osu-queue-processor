@@ -47,7 +47,7 @@ namespace osu.Server.QueueProcessor
         /// An option queue to push to when finished.
         /// </summary>
         private readonly ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
-            Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis");
+            Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost");
 
         private long totalProcessed;
 
