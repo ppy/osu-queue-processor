@@ -32,4 +32,6 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
       - name: Test
+        env:
+          REDIS_HOST: redis
         run: dotnet test --no-restore --verbosity normal
