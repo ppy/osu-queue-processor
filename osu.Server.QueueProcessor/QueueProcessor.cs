@@ -232,6 +232,16 @@ namespace osu.Server.QueueProcessor
         public void ClearQueue() => redis.GetDatabase().KeyDelete(QueueName);
 
         /// <summary>
+        /// Publishes a message to a Redis channel with the supplied <paramref name="channelName"/>.
+        /// The message will be serialised using JSON.
+        /// </summary>
+        /// <param name="channelName">The name of the Redis channel to publish to.</param>
+        /// <param name="message">The message to publish to the channel.</param>
+        /// <typeparam name="TMessage">The type of message to be published.</typeparam>
+        public void PublishMessage<TMessage>(string channelName, TMessage message) =>
+            redis.GetDatabase().Publish(channelName, JsonConvert.SerializeObject(message));
+
+        /// <summary>
         /// Retrieve a database connection.
         /// </summary>
         public virtual MySqlConnection GetDatabaseConnection()
