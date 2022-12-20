@@ -232,6 +232,22 @@ namespace osu.Server.QueueProcessor
         public void ClearQueue() => redis.GetDatabase().KeyDelete(QueueName);
 
         /// <summary>
+        /// Publishes a message to a Redis channel with the supplied <paramref name="channelName"/>.
+        /// </summary>
+        /// <remarks>
+        /// The message will be serialised using JSON.
+        /// Successful publications are tracked in Datadog, using the <paramref name="channelName"/> and the <typeparamref name="TMessage"/>'s full type name as a tag.
+        /// </remarks>
+        /// <param name="channelName">The name of the Redis channel to publish to.</param>
+        /// <param name="message">The message to publish to the channel.</param>
+        /// <typeparam name="TMessage">The type of message to be published.</typeparam>
+        public void PublishMessage<TMessage>(string channelName, TMessage message)
+        {
+            redis.GetDatabase().Publish(channelName, JsonConvert.SerializeObject(message));
+            DogStatsd.Increment("messages_published", tags: new[] { $"channel:{channelName}", $"type:{typeof(TMessage).FullName}" });
+        }
+
+        /// <summary>
         /// Retrieve a database connection.
         /// </summary>
         public virtual MySqlConnection GetDatabaseConnection()
