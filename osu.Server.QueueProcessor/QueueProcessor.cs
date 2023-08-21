@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MySqlConnector;
 using Newtonsoft.Json;
 using osu.Framework.Threading;
+using Sentry;
 using StackExchange.Redis;
 using StatsdClient;
 
@@ -83,6 +84,7 @@ namespace osu.Server.QueueProcessor
         /// <param name="cancellation">An optional cancellation token.</param>
         public void Run(CancellationToken cancellation = default)
         {
+            using (SentrySdk.Init(setupSentry))
             using (new Timer(_ => outputStats(), null, TimeSpan.Zero, TimeSpan.FromSeconds(5)))
             using (var cts = new GracefulShutdownSource(cancellation))
             {
@@ -146,6 +148,9 @@ namespace osu.Server.QueueProcessor
 
                                             Error?.Invoke(t.Exception, item);
 
+                                            if (t.Exception != null)
+                                                SentrySdk.CaptureException(t.Exception);
+
                                             Console.WriteLine($"Error processing {item}: {t.Exception}");
                                             attemptRetry(item);
                                         }
@@ -165,6 +170,7 @@ namespace osu.Server.QueueProcessor
                         {
                             Interlocked.Increment(ref consecutiveErrors);
                             Console.WriteLine($"Error dequeueing from queue: {e}");
+                            SentrySdk.CaptureException(e);
                         }
                     }
 
@@ -182,6 +188,12 @@ namespace osu.Server.QueueProcessor
 
             DogStatsd.Dispose();
             outputStats();
+        }
+
+        private void setupSentry(SentryOptions options)
+        {
+            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+            options.DefaultTags["queue"] = QueueName;
         }
 
         private void attemptRetry(T item)
