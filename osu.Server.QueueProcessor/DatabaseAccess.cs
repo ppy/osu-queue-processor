@@ -21,13 +21,14 @@ namespace osu.Server.QueueProcessor
             if (string.IsNullOrEmpty(connectionString))
             {
                 string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
+                string port = (Environment.GetEnvironmentVariable("DB_PORT") ?? "3306");
                 string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
                 string password = (Environment.GetEnvironmentVariable("DB_PASS") ?? string.Empty);
                 string name = (Environment.GetEnvironmentVariable("DB_NAME") ?? "osu");
 
                 string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
 
-                connectionString = $"Server={host};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling=true;";
+                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling=true;";
             }
 
             var connection = new MySqlConnection(connectionString);
