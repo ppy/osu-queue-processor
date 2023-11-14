@@ -262,34 +262,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Retrieve a database connection.
         /// </summary>
-        public virtual MySqlConnection GetDatabaseConnection()
-        {
-            string connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? String.Empty;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                string host = (Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost");
-                string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
-                string password = (Environment.GetEnvironmentVariable("DB_PASS") ?? string.Empty);
-                string name = (Environment.GetEnvironmentVariable("DB_NAME") ?? "osu");
-
-                string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
-
-                connectionString = $"Server={host};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling=true;";
-            }
-
-            var connection = new MySqlConnection(connectionString);
-            connection.Open();
-
-            // TODO: remove this when we have set a saner time zone server-side.
-            using (var cmd = connection.CreateCommand())
-            {
-                cmd.CommandText = "SET time_zone = '+00:00';";
-                cmd.ExecuteNonQuery();
-            }
-
-            return connection;
-        }
+        public MySqlConnection GetDatabaseConnection() => DatabaseAccess.GetConnection();
 
         /// <summary>
         /// Implement to process a single item from the queue. Will only be invoked if <see cref="ProcessResults"/> is not implemented.
