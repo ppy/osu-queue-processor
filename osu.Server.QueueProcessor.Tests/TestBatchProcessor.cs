@@ -4,26 +4,27 @@
 using System;
 using System.Collections.Generic;
 
-namespace osu.Server.QueueProcessor.Tests;
-
-public class TestBatchProcessor : QueueProcessor<FakeData>
+namespace osu.Server.QueueProcessor.Tests
 {
-    public TestBatchProcessor()
-        : base(new QueueConfiguration
-        {
-            InputQueueName = "test-batch",
-            BatchSize = 5,
-        })
+    public class TestBatchProcessor : QueueProcessor<FakeData>
     {
-    }
-
-    protected override void ProcessResults(IEnumerable<FakeData> items)
-    {
-        foreach (var item in items)
+        public TestBatchProcessor()
+            : base(new QueueConfiguration
+            {
+                InputQueueName = "test-batch",
+                BatchSize = 5,
+            })
         {
-            Received?.Invoke(item);
         }
-    }
 
-    public Action<FakeData>? Received;
+        protected override void ProcessResults(IEnumerable<FakeData> items)
+        {
+            foreach (var item in items)
+            {
+                Received?.Invoke(item);
+            }
+        }
+
+        public Action<FakeData>? Received;
+    }
 }
