@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Linq;
 using StackExchange.Redis;
 
 namespace osu.Server.QueueProcessor
@@ -25,7 +26,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Clears the current live schema.
         /// </summary>
-        public static void ClearCurrentSchemaVersion(this ConnectionMultiplexer connection)
+        public static void ClearCurrentSchema(this ConnectionMultiplexer connection)
         {
             connection.GetDatabase().KeyDelete(mainSchemaKey);
         }
@@ -41,7 +42,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Get the current (live) schema version.
         /// </summary>
-        public static string GetSchemaVersion(this ConnectionMultiplexer connection)
+        public static string GetCurrentSchema(this ConnectionMultiplexer connection)
         {
             return connection.GetDatabase().StringGet(mainSchemaKey).ToString() ?? string.Empty;
         }
@@ -51,6 +52,9 @@ namespace osu.Server.QueueProcessor
         /// </summary>
         public static bool RemoveActiveSchema(this ConnectionMultiplexer connection, string value)
         {
+            if (connection.GetCurrentSchema() == value)
+                throw new InvalidOperationException($"Specified schema is current. Call {nameof(ClearCurrentSchema)} first");
+
             return connection.GetDatabase().SetRemove(allActiveSchemasKey, value);
         }
 
@@ -61,7 +65,12 @@ namespace osu.Server.QueueProcessor
         /// <param name="value"></param>
         public static void SetCurrentSchema(this ConnectionMultiplexer connection, string value)
         {
-            connection.GetDatabase().StringSet(mainSchemaKey, value);
+            IDatabase database = connection.GetDatabase();
+
+            if (connection.GetActiveSchemas().All(s => s != value))
+                throw new InvalidOperationException($"Attempted to set current schema without schema being in active list. Call {nameof(AddActiveSchema)} first");
+
+            database.StringSet(mainSchemaKey, value);
         }
     }
 }
