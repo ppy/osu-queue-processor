@@ -118,7 +118,7 @@ namespace osu.Server.QueueProcessor
 
                             // null or empty check is required for redis 6.x. 7.x reports `null` instead.
                             foreach (var redisItem in redisItems.Where(i => !i.IsNullOrEmpty))
-                                items.Add(JsonConvert.DeserializeObject<T>(redisItem) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
+                                items.Add(JsonConvert.DeserializeObject<T>(redisItem, config.JsonSerializerSettings) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
 
                             if (items.Count == 0)
                             {

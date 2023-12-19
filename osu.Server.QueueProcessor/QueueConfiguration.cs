@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace osu.Server.QueueProcessor
 {
     public class QueueConfiguration
@@ -34,5 +36,10 @@ namespace osu.Server.QueueProcessor
         /// Setting above 1 will allow processing in batches (see <see cref="QueueProcessor{T}.ProcessResults"/>).
         /// </summary>
         public int BatchSize { get; set; } = 1;
+
+        /// <summary>
+        /// Serialization settings to use when deserializing items from redis.
+        /// </summary>
+        public JsonSerializerSettings? JsonSerializerSettings { get; set; } = null;
     }
 }
