@@ -191,7 +191,7 @@ namespace osu.Server.QueueProcessor
 
         private void setupSentry(SentryOptions options)
         {
-            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? string.Empty;
             options.DefaultTags["queue"] = QueueName;
         }
 
