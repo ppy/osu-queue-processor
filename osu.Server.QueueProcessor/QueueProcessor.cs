@@ -107,6 +107,7 @@ namespace osu.Server.QueueProcessor
 
                             var redisItems = database.ListRightPop(QueueName, config.BatchSize);
 
+                            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract (https://github.com/StackExchange/StackExchange.Redis/issues/2697)
                             // queue doesn't exist.
                             if (redisItems == null)
                             {
@@ -118,7 +119,7 @@ namespace osu.Server.QueueProcessor
 
                             // null or empty check is required for redis 6.x. 7.x reports `null` instead.
                             foreach (var redisItem in redisItems.Where(i => !i.IsNullOrEmpty))
-                                items.Add(JsonConvert.DeserializeObject<T>(redisItem) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
+                                items.Add(JsonConvert.DeserializeObject<T>(redisItem!) ?? throw new InvalidOperationException("Dequeued item could not be deserialised."));
 
                             if (items.Count == 0)
                             {
@@ -190,7 +191,7 @@ namespace osu.Server.QueueProcessor
 
         private void setupSentry(SentryOptions options)
         {
-            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
+            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? string.Empty;
             options.DefaultTags["queue"] = QueueName;
         }
 
@@ -253,7 +254,7 @@ namespace osu.Server.QueueProcessor
         /// <typeparam name="TMessage">The type of message to be published.</typeparam>
         public void PublishMessage<TMessage>(string channelName, TMessage message)
         {
-            getRedisDatabase().Publish(channelName, JsonConvert.SerializeObject(message));
+            getRedisDatabase().Publish(new RedisChannel(channelName, RedisChannel.PatternMode.Auto), JsonConvert.SerializeObject(message));
             DogStatsd.Increment("messages_published", tags: new[] { $"channel:{channelName}", $"type:{typeof(TMessage).FullName}" });
         }
 

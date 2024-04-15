@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -106,6 +107,7 @@ namespace osu.Server.QueueProcessor.Tests
         /// If the processor is cancelled mid-operation, every item should either be processed or still in the queue.
         /// </summary>
         [Fact]
+        [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method")] // For simplicity.
         public void EnsureCancellingDoesNotLoseItems()
         {
             var inFlightObjects = new List<FakeData>();

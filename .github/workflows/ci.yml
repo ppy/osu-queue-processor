@@ -8,13 +8,13 @@ on:
 
 jobs:
   unit-tests:
-
     runs-on: ubuntu-latest
-    container: node:10.18-jessie
 
     services:
       redis:
         image: redis
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -22,16 +22,15 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install .NET 8.0.x
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "6.0.x"
+          dotnet-version: "8.0.x"
       - name: Install dependencies
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore
       - name: Test
-        env:
-          REDIS_HOST: redis
         run: dotnet test --no-restore --verbosity normal
