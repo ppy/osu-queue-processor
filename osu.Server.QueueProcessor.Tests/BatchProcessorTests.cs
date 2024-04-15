@@ -9,240 +9,241 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace osu.Server.QueueProcessor.Tests;
-
-public class BatchProcessorTests
+namespace osu.Server.QueueProcessor.Tests
 {
-    private readonly ITestOutputHelper output;
-    private readonly TestBatchProcessor processor;
-
-    public BatchProcessorTests(ITestOutputHelper output)
+    public class BatchProcessorTests
     {
-        this.output = output;
+        private readonly ITestOutputHelper output;
+        private readonly TestBatchProcessor processor;
 
-        processor = new TestBatchProcessor();
-        processor.ClearQueue();
-    }
-
-    /// <summary>
-    /// Checking that processing an empty queue works as expected.
-    /// </summary>
-    [Fact]
-    public void ProcessEmptyQueue()
-    {
-        processor.Run(new CancellationTokenSource(1000).Token);
-    }
-
-    [Fact]
-    public void SendThenReceive_Single()
-    {
-        var cts = new CancellationTokenSource(10000);
-
-        var obj = FakeData.New();
-
-        FakeData? receivedObject = null;
-
-        processor.PushToQueue(obj);
-
-        processor.Received += o =>
+        public BatchProcessorTests(ITestOutputHelper output)
         {
-            receivedObject = o;
-            cts.Cancel();
-        };
+            this.output = output;
 
-        processor.Run(cts.Token);
+            processor = new TestBatchProcessor();
+            processor.ClearQueue();
+        }
 
-        Assert.Equal(obj, receivedObject);
-    }
+        /// <summary>
+        /// Checking that processing an empty queue works as expected.
+        /// </summary>
+        [Fact]
+        public void ProcessEmptyQueue()
+        {
+            processor.Run(new CancellationTokenSource(1000).Token);
+        }
 
-    [Fact]
-    public void SendThenReceive_Multiple()
-    {
-        const int send_count = 20;
+        [Fact]
+        public void SendThenReceive_Single()
+        {
+            var cts = new CancellationTokenSource(10000);
 
-        var cts = new CancellationTokenSource(10000);
+            var obj = FakeData.New();
 
-        var objects = new HashSet<FakeData>();
-        for (int i = 0; i < send_count; i++)
-            objects.Add(FakeData.New());
+            FakeData? receivedObject = null;
 
-        var receivedObjects = new HashSet<FakeData>();
-
-        foreach (var obj in objects)
             processor.PushToQueue(obj);
 
-        processor.Received += o =>
-        {
-            lock (receivedObjects)
-                receivedObjects.Add(o);
-
-            if (receivedObjects.Count == send_count)
+            processor.Received += o =>
+            {
+                receivedObject = o;
                 cts.Cancel();
-        };
+            };
 
-        processor.Run(cts.Token);
+            processor.Run(cts.Token);
 
-        Assert.Equal(objects, receivedObjects);
-    }
+            Assert.Equal(obj, receivedObject);
+        }
 
-    /// <summary>
-    /// If the processor is cancelled mid-operation, every item should either be processed or still in the queue.
-    /// </summary>
-    [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method")] // For simplicity.
-    public void EnsureCancellingDoesNotLoseItems()
-    {
-        var inFlightObjects = new List<FakeData>();
-
-        int processed = 0;
-        int sent = 0;
-
-        processor.Received += o =>
+        [Fact]
+        public void SendThenReceive_Multiple()
         {
-            lock (inFlightObjects)
+            const int send_count = 20;
+
+            var cts = new CancellationTokenSource(10000);
+
+            var objects = new HashSet<FakeData>();
+            for (int i = 0; i < send_count; i++)
+                objects.Add(FakeData.New());
+
+            var receivedObjects = new HashSet<FakeData>();
+
+            foreach (var obj in objects)
+                processor.PushToQueue(obj);
+
+            processor.Received += o =>
             {
-                inFlightObjects.Remove(o);
-                Interlocked.Increment(ref processed);
-            }
-        };
+                lock (receivedObjects)
+                    receivedObjects.Add(o);
 
-        const int run_count = 5;
+                if (receivedObjects.Count == send_count)
+                    cts.Cancel();
+            };
 
-        // start and stop processing multiple times, checking items are in a good state each time.
+            processor.Run(cts.Token);
 
-        for (int i = 0; i < run_count; i++)
+            Assert.Equal(objects, receivedObjects);
+        }
+
+        /// <summary>
+        /// If the processor is cancelled mid-operation, every item should either be processed or still in the queue.
+        /// </summary>
+        [Fact]
+        [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method")] // For simplicity.
+        public void EnsureCancellingDoesNotLoseItems()
         {
-            var cts = new CancellationTokenSource();
+            var inFlightObjects = new List<FakeData>();
 
-            var sendTask = Task.Run(() =>
+            int processed = 0;
+            int sent = 0;
+
+            processor.Received += o =>
             {
-                while (!cts.IsCancellationRequested)
+                lock (inFlightObjects)
                 {
-                    var obj = FakeData.New();
-
-                    lock (inFlightObjects)
-                    {
-                        processor.PushToQueue(obj);
-                        inFlightObjects.Add(obj);
-                    }
-
-                    Interlocked.Increment(ref sent);
+                    inFlightObjects.Remove(o);
+                    Interlocked.Increment(ref processed);
                 }
-            }, CancellationToken.None);
+            };
 
-            // Ensure there are some items in the queue before starting the processor.
-            while (inFlightObjects.Count < 1000)
-                Thread.Sleep(100);
+            const int run_count = 5;
 
-            var receiveTask = Task.Run(() => processor.Run(cts.Token), CancellationToken.None);
+            // start and stop processing multiple times, checking items are in a good state each time.
 
-            Thread.Sleep(1000);
+            for (int i = 0; i < run_count; i++)
+            {
+                var cts = new CancellationTokenSource();
 
-            cts.Cancel();
+                var sendTask = Task.Run(() =>
+                {
+                    while (!cts.IsCancellationRequested)
+                    {
+                        var obj = FakeData.New();
 
-            sendTask.Wait(10000);
-            receiveTask.Wait(10000);
+                        lock (inFlightObjects)
+                        {
+                            processor.PushToQueue(obj);
+                            inFlightObjects.Add(obj);
+                        }
+
+                        Interlocked.Increment(ref sent);
+                    }
+                }, CancellationToken.None);
+
+                // Ensure there are some items in the queue before starting the processor.
+                while (inFlightObjects.Count < 1000)
+                    Thread.Sleep(100);
+
+                var receiveTask = Task.Run(() => processor.Run(cts.Token), CancellationToken.None);
+
+                Thread.Sleep(1000);
+
+                cts.Cancel();
+
+                sendTask.Wait(10000);
+                receiveTask.Wait(10000);
+
+                output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
+            }
+
+            var finalCts = new CancellationTokenSource(10000);
+
+            processor.Received += _ =>
+            {
+                if (inFlightObjects.Count == 0)
+                    // early cancel once the list is emptied.
+                    finalCts.Cancel();
+            };
+
+            // process all remaining items
+            processor.Run(finalCts.Token);
+
+            Assert.Empty(inFlightObjects);
+            Assert.Equal(0, processor.GetQueueSize());
 
             output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
         }
 
-        var finalCts = new CancellationTokenSource(10000);
-
-        processor.Received += _ =>
+        [Fact]
+        public void SendThenErrorDoesRetry()
         {
-            if (inFlightObjects.Count == 0)
-                // early cancel once the list is emptied.
-                finalCts.Cancel();
-        };
+            var cts = new CancellationTokenSource(10000);
 
-        // process all remaining items
-        processor.Run(finalCts.Token);
+            var obj = FakeData.New();
 
-        Assert.Empty(inFlightObjects);
-        Assert.Equal(0, processor.GetQueueSize());
+            FakeData? receivedObject = null;
 
-        output.WriteLine($"Sent: {sent} In-flight: {inFlightObjects.Count} Processed: {processed}");
-    }
+            bool didThrowOnce = false;
 
-    [Fact]
-    public void SendThenErrorDoesRetry()
-    {
-        var cts = new CancellationTokenSource(10000);
+            processor.PushToQueue(obj);
 
-        var obj = FakeData.New();
-
-        FakeData? receivedObject = null;
-
-        bool didThrowOnce = false;
-
-        processor.PushToQueue(obj);
-
-        processor.Received += o =>
-        {
-            if (o.TotalRetries == 0)
+            processor.Received += o =>
             {
-                didThrowOnce = true;
-                throw new Exception();
-            }
+                if (o.TotalRetries == 0)
+                {
+                    didThrowOnce = true;
+                    throw new Exception();
+                }
 
-            receivedObject = o;
-            cts.Cancel();
-        };
-
-        processor.Run(cts.Token);
-
-        Assert.True(didThrowOnce);
-        Assert.Equal(obj, receivedObject);
-    }
-
-    [Fact]
-    public void SendThenErrorForeverDoesDrop()
-    {
-        var cts = new CancellationTokenSource(10000);
-
-        var obj = FakeData.New();
-
-        int attemptCount = 0;
-
-        processor.PushToQueue(obj);
-
-        processor.Received += o =>
-        {
-            attemptCount++;
-            if (attemptCount > 3)
+                receivedObject = o;
                 cts.Cancel();
+            };
 
-            throw new Exception();
-        };
+            processor.Run(cts.Token);
 
-        processor.Run(cts.Token);
+            Assert.True(didThrowOnce);
+            Assert.Equal(obj, receivedObject);
+        }
 
-        Assert.Equal(4, attemptCount);
-        Assert.Equal(0, processor.GetQueueSize());
-    }
-
-    [Fact]
-    public void ExitOnErrorThresholdHit()
-    {
-        var cts = new CancellationTokenSource(10000);
-
-        int attemptCount = 0;
-
-        // 3 retries for each, so at least one should remain in queue.
-        processor.PushToQueue(FakeData.New());
-        processor.PushToQueue(FakeData.New());
-        processor.PushToQueue(FakeData.New());
-        processor.PushToQueue(FakeData.New());
-
-        processor.Received += o =>
+        [Fact]
+        public void SendThenErrorForeverDoesDrop()
         {
-            o.Failed = true;
-            attemptCount++;
-        };
+            var cts = new CancellationTokenSource(10000);
 
-        Assert.Throws<Exception>(() => processor.Run(cts.Token));
+            var obj = FakeData.New();
 
-        Assert.True(attemptCount >= 10, "attemptCount >= 10");
-        Assert.NotEqual(0, processor.GetQueueSize());
+            int attemptCount = 0;
+
+            processor.PushToQueue(obj);
+
+            processor.Received += o =>
+            {
+                attemptCount++;
+                if (attemptCount > 3)
+                    cts.Cancel();
+
+                throw new Exception();
+            };
+
+            processor.Run(cts.Token);
+
+            Assert.Equal(4, attemptCount);
+            Assert.Equal(0, processor.GetQueueSize());
+        }
+
+        [Fact]
+        public void ExitOnErrorThresholdHit()
+        {
+            var cts = new CancellationTokenSource(10000);
+
+            int attemptCount = 0;
+
+            // 3 retries for each, so at least one should remain in queue.
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+            processor.PushToQueue(FakeData.New());
+
+            processor.Received += o =>
+            {
+                o.Failed = true;
+                attemptCount++;
+            };
+
+            Assert.Throws<Exception>(() => processor.Run(cts.Token));
+
+            Assert.True(attemptCount >= 10, "attemptCount >= 10");
+            Assert.NotEqual(0, processor.GetQueueSize());
+        }
     }
 }

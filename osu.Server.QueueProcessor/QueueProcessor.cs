@@ -46,8 +46,7 @@ namespace osu.Server.QueueProcessor
 
         private readonly QueueConfiguration config;
 
-        private readonly Lazy<ConnectionMultiplexer> redis = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(
-            Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost"));
+        private readonly Lazy<ConnectionMultiplexer> redis = new Lazy<ConnectionMultiplexer>(RedisAccess.GetConnection);
 
         private IDatabase getRedisDatabase() => redis.Value.GetDatabase();
 
