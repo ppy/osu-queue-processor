@@ -107,6 +107,7 @@ namespace osu.Server.QueueProcessor
 
                             var redisItems = database.ListRightPop(QueueName, config.BatchSize);
 
+                            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract (https://github.com/StackExchange/StackExchange.Redis/issues/2697)
                             // queue doesn't exist.
                             if (redisItems == null)
                             {

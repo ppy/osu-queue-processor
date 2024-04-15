@@ -34,7 +34,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Get all active schemas (including past or future).
         /// </summary>
-        public static string[] GetActiveSchemas(this ConnectionMultiplexer connection)
+        public static string?[] GetActiveSchemas(this ConnectionMultiplexer connection)
         {
             return connection.GetDatabase().SetMembers(allActiveSchemasKey).ToStringArray();
         }
@@ -44,7 +44,7 @@ namespace osu.Server.QueueProcessor
         /// </summary>
         public static string GetCurrentSchema(this ConnectionMultiplexer connection)
         {
-            return connection.GetDatabase().StringGet(mainSchemaKey).ToString() ?? string.Empty;
+            return connection.GetDatabase().StringGet(mainSchemaKey).ToString();
         }
 
         /// <summary>
