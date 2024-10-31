@@ -31,7 +31,8 @@ namespace osu.Server.QueueProcessor
 
                 string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
 
-                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling={pooling};Max Pool Size={maxPoolSize};";
+                // Pipelining disabled because ProxySQL no like.
+                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling={pooling};Max Pool Size={maxPoolSize}; Pipelining=false";
             }
 
             var connection = new MySqlConnection(connectionString);
