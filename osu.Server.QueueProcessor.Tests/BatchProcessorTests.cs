@@ -209,6 +209,7 @@ namespace osu.Server.QueueProcessor.Tests
             processor.Error += (exception, item) =>
             {
                 Assert.NotNull(exception);
+                Assert.Equal(exception, item.Exception);
 
                 gotCorrectExceptionForItem1 |= Equals(item.Data, obj1.Data) && exception.Message == "1";
                 gotCorrectExceptionForItem2 |= Equals(item.Data, obj2.Data) && exception.Message == "2";

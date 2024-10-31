@@ -21,7 +21,14 @@ namespace osu.Server.QueueProcessor.Tests
         {
             foreach (var item in items)
             {
-                Received?.Invoke(item);
+                try
+                {
+                    Received?.Invoke(item);
+                }
+                catch (Exception e)
+                {
+                    item.Exception = e;
+                }
             }
         }
 

@@ -132,11 +132,11 @@ namespace osu.Server.QueueProcessor
 
                             // individual processing should not be cancelled as we have already grabbed from the queue.
                             Task.Factory.StartNew(() => { ProcessResults(items); }, CancellationToken.None, TaskCreationOptions.HideScheduler, threadPool)
-                                .ContinueWith(t =>
+                                .ContinueWith(_ =>
                                 {
                                     foreach (var item in items)
                                     {
-                                        if (t.Exception != null || item.Failed)
+                                        if (item.Failed)
                                         {
                                             Interlocked.Increment(ref totalErrors);
 
@@ -145,12 +145,12 @@ namespace osu.Server.QueueProcessor
 
                                             Interlocked.Increment(ref consecutiveErrors);
 
-                                            Error?.Invoke(t.Exception, item);
+                                            Error?.Invoke(item.Exception, item);
 
-                                            if (t.Exception != null)
-                                                SentrySdk.CaptureException(t.Exception);
+                                            if (item.Exception != null)
+                                                SentrySdk.CaptureException(item.Exception);
 
-                                            Console.WriteLine($"Error processing {item}: {t.Exception}");
+                                            Console.WriteLine($"Error processing {item}: {item.Exception}");
                                             attemptRetry(item);
                                         }
                                         else
@@ -197,8 +197,6 @@ namespace osu.Server.QueueProcessor
 
         private void attemptRetry(T item)
         {
-            item.Failed = false;
-
             if (item.TotalRetries++ < config.MaxRetries)
             {
                 Console.WriteLine($"Re-queueing for attempt {item.TotalRetries} / {config.MaxRetries}");
@@ -274,11 +272,26 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Implement to process batches of items from the queue.
         /// </summary>
+        /// <remarks>
+        /// In most cases, you should only need to override and implement <see cref="ProcessResult"/>.
+        /// Only override this if you need more efficient batch processing.
+        ///
+        /// If overriding this method, you should try-catch for exceptions, and set any exception against
+        /// the relevant <see cref="QueueItem"/>. If this is not done, failures will not be handled correctly.</remarks>
         /// <param name="items">The items to process.</param>
         protected virtual void ProcessResults(IEnumerable<T> items)
         {
             foreach (var item in items)
-                ProcessResult(item);
+            {
+                try
+                {
+                    ProcessResult(item);
+                }
+                catch (Exception e)
+                {
+                    item.Exception = e;
+                }
+            }
         }
     }
 }

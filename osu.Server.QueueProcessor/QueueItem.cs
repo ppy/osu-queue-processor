@@ -12,11 +12,21 @@ namespace osu.Server.QueueProcessor
     [Serializable]
     public abstract class QueueItem
     {
+        [IgnoreDataMember]
+        private bool failed;
+
         /// <summary>
         /// Set to <c>true</c> to mark this item is failed. This will cause it to be retried.
         /// </summary>
         [IgnoreDataMember]
-        public bool Failed { get; set; }
+        public bool Failed
+        {
+            get => failed || Exception != null;
+            set => failed = value;
+        }
+
+        [IgnoreDataMember]
+        public Exception? Exception { get; set; }
 
         /// <summary>
         /// The number of times processing this item has been retried. Handled internally by <see cref="QueueProcessor{T}"/>.
