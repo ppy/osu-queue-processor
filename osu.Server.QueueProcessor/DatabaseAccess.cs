@@ -25,10 +25,13 @@ namespace osu.Server.QueueProcessor
                 string user = (Environment.GetEnvironmentVariable("DB_USER") ?? "root");
                 string password = (Environment.GetEnvironmentVariable("DB_PASS") ?? string.Empty);
                 string name = (Environment.GetEnvironmentVariable("DB_NAME") ?? "osu");
+                bool pooling = string.Equals(Environment.GetEnvironmentVariable("DB_POOLING"), Boolean.FalseString, StringComparison.InvariantCultureIgnoreCase)
+                               && Environment.GetEnvironmentVariable("DB_POOLING") != "0";
+                int maxPoolSize = int.Parse(Environment.GetEnvironmentVariable("DB_MAX_POOL_SIZE") ?? "100");
 
                 string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
 
-                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling=true;";
+                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling={pooling};Max Pool Size={maxPoolSize};";
             }
 
             var connection = new MySqlConnection(connectionString);
