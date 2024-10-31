@@ -145,7 +145,13 @@ namespace osu.Server.QueueProcessor
 
                                             Interlocked.Increment(ref consecutiveErrors);
 
-                                            Error?.Invoke(item.Exception, item);
+                                            try
+                                            {
+                                                Error?.Invoke(item.Exception, item);
+                                            }
+                                            catch
+                                            {
+                                            }
 
                                             if (item.Exception != null)
                                                 SentrySdk.CaptureException(item.Exception);
