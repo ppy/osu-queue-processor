@@ -196,6 +196,40 @@ namespace osu.Server.QueueProcessor.Tests
         }
 
         [Fact]
+        public void MultipleErrorsAttachedToCorrectItems()
+        {
+            var cts = new CancellationTokenSource(10000);
+
+            var obj1 = FakeData.New();
+            var obj2 = FakeData.New();
+
+            bool gotCorrectExceptionForItem1 = false;
+            bool gotCorrectExceptionForItem2 = false;
+
+            processor.Error += (exception, item) =>
+            {
+                Assert.NotNull(exception);
+
+                gotCorrectExceptionForItem1 |= Equals(item.Data, obj1.Data) && exception.Message == "1";
+                gotCorrectExceptionForItem2 |= Equals(item.Data, obj2.Data) && exception.Message == "2";
+            };
+
+            processor.PushToQueue(new[] { obj1, obj2 });
+
+            processor.Received += o =>
+            {
+                if (Equals(o.Data, obj1.Data)) throw new Exception("1");
+                if (Equals(o.Data, obj2.Data)) throw new Exception("2");
+            };
+
+            processor.Run(cts.Token);
+
+            Assert.Equal(0, processor.GetQueueSize());
+            Assert.True(gotCorrectExceptionForItem1);
+            Assert.True(gotCorrectExceptionForItem2);
+        }
+
+        [Fact]
         public void SendThenErrorForeverDoesDrop()
         {
             var cts = new CancellationTokenSource(10000);
