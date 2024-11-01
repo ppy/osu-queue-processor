@@ -11,10 +11,11 @@ namespace osu.Server.QueueProcessor
     /// </summary>
     public static class RedisAccess
     {
+        private static readonly ConfigurationOptions redis_config = ConfigurationOptions.Parse(Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost");
+
         /// <summary>
         /// Retrieve a fresh Redis connection. Should be disposed after use.
         /// </summary>
-        public static ConnectionMultiplexer GetConnection() =>
-            ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost");
+        public static ConnectionMultiplexer GetConnection() => ConnectionMultiplexer.Connect(redis_config);
     }
 }
