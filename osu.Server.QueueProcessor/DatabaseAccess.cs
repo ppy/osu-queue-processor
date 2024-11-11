@@ -35,7 +35,7 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Retrieve a fresh MySQL connection. Should be disposed after use.
         /// </summary>
-        public static async Task<MySqlConnection> GetConnectionAsync(CancellationToken cancellationToken)
+        public static async Task<MySqlConnection> GetConnectionAsync(CancellationToken cancellationToken = default)
         {
             var connection = new MySqlConnection(getConnectionString());
 
