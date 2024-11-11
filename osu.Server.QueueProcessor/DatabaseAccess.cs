@@ -2,6 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using MySqlConnector;
 
 namespace osu.Server.QueueProcessor
@@ -15,6 +17,41 @@ namespace osu.Server.QueueProcessor
         /// Retrieve a fresh MySQL connection. Should be disposed after use.
         /// </summary>
         public static MySqlConnection GetConnection()
+        {
+            var connection = new MySqlConnection(getConnectionString());
+
+            connection.Open();
+
+            // TODO: remove this when we have set a saner time zone server-side.
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SET time_zone = '+00:00';";
+                cmd.ExecuteNonQuery();
+            }
+
+            return connection;
+        }
+
+        /// <summary>
+        /// Retrieve a fresh MySQL connection. Should be disposed after use.
+        /// </summary>
+        public static async Task<MySqlConnection> GetConnectionAsync(CancellationToken cancellationToken)
+        {
+            var connection = new MySqlConnection(getConnectionString());
+
+            await connection.OpenAsync(cancellationToken);
+
+            // TODO: remove this when we have set a saner time zone server-side.
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "SET time_zone = '+00:00';";
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            return connection;
+        }
+
+        private static string getConnectionString()
         {
             string connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? String.Empty;
 
@@ -31,20 +68,11 @@ namespace osu.Server.QueueProcessor
                 string passwordString = string.IsNullOrEmpty(password) ? string.Empty : $"Password={password};";
 
                 // Pipelining disabled because ProxySQL no like.
-                connectionString = $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling={pooling};Max Pool Size={maxPoolSize}; Pipelining=false";
+                connectionString =
+                    $"Server={host};Port={port};Database={name};User ID={user};{passwordString}ConnectionTimeout=5;ConnectionReset=false;Pooling={pooling};Max Pool Size={maxPoolSize}; Pipelining=false";
             }
 
-            var connection = new MySqlConnection(connectionString);
-            connection.Open();
-
-            // TODO: remove this when we have set a saner time zone server-side.
-            using (var cmd = connection.CreateCommand())
-            {
-                cmd.CommandText = "SET time_zone = '+00:00';";
-                cmd.ExecuteNonQuery();
-            }
-
-            return connection;
+            return connectionString;
         }
     }
 }
