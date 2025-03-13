@@ -18,16 +18,34 @@ namespace osu.Server.QueueProcessor
         /// <summary>
         /// Start a background task which will poll for beatmap sets with updates.
         /// </summary>
+        /// <remarks>
+        /// Prior to polling, a blocking call to <see cref="GetUpdatedBeatmapSets"/> is required to ensure no initial updates are missed.
+        /// The general flow of usage should be:
+        ///
+        /// // before doing anything else
+        /// var updates = await GetUpdatedBeatmapSets();
+        /// // can now query and cache beatmaps.
+        /// StartPolling(updates, callback);
+        ///
+        /// void callback(BeatmapUpdates u)
+        /// {
+        ///     foreach (int id in u.BeatmapSetIDs)
+        ///     {
+        ///         // invalidate `id`
+        ///     }
+        /// }
+        /// </remarks>
+        /// <param name="initialUpdates">The response from an initial call to <see cref="GetUpdatedBeatmapSets"/>.</param>
         /// <param name="callback">A callback to receive information about any updated beatmap sets.</param>
         /// <param name="pollMilliseconds">The number of milliseconds to wait between polls. Starts counting from response of previous poll.</param>
         /// <param name="limit">The maximum number of beatmap sets to return in a single response.</param>
         /// <returns>An <see cref="IDisposable"/> that should be disposed of to stop polling.</returns>
-        public static IDisposable StartPolling(Action<BeatmapUpdates> callback, int pollMilliseconds = 10000, int limit = 50) =>
+        public static IDisposable StartPolling(BeatmapUpdates initialUpdates, Action<BeatmapUpdates> callback, int pollMilliseconds = 10000, int limit = 50) =>
             new PollingBeatmapStatusWatcher(callback, pollMilliseconds, limit);
 
         /// <summary>
         /// Check for any beatmap sets with updates since the provided queue ID.
-        /// Should be called on a regular basis. See <see cref="StartPolling"/> for automatic polling.
+        /// Should be called on a regular basis. See <see cref="StartPolling"/> for automatic polling after the first call.
         /// </summary>
         /// <param name="lastQueueId">The last checked queue ID, ie <see cref="BeatmapUpdates.LastProcessedQueueID"/>.</param>
         /// <param name="limit">The maximum number of beatmap sets to return in a single response.</param>
