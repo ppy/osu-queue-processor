@@ -98,33 +98,36 @@ namespace osu.Server.QueueProcessor
 
             public PollingBeatmapStatusWatcher(int initialQueueId, Action<BeatmapUpdates> callback, int pollMilliseconds, int limit = 50)
             {
-                this.lastQueueId = initialQueueId;
+                lastQueueId = initialQueueId;
                 this.pollMilliseconds = pollMilliseconds;
                 this.limit = limit;
                 this.callback = callback;
 
                 cts = new CancellationTokenSource();
 
-                _ = poll();
+                _ = Task.Factory.StartNew(poll, TaskCreationOptions.LongRunning);
             }
 
             private async Task poll()
             {
-                try
+                while (!cts.Token.IsCancellationRequested)
                 {
-                    var result = await BeatmapStatusWatcher.GetUpdatedBeatmapSetsAsync(lastQueueId, limit);
+                    try
+                    {
+                        var result = await GetUpdatedBeatmapSetsAsync(lastQueueId, limit);
 
-                    lastQueueId = result.LastProcessedQueueID;
-                    if (result.BeatmapSetIDs.Length > 0)
-                        callback(result);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Poll failed with {e}.");
-                    await Task.Delay(1000);
-                }
+                        lastQueueId = result.LastProcessedQueueID;
+                        if (result.BeatmapSetIDs.Length > 0)
+                            callback(result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Poll failed with {e}.");
+                        await Task.Delay(1000, cts.Token);
+                    }
 
-                _ = Task.Delay(pollMilliseconds, cts.Token).ContinueWith(_ => poll(), cts.Token);
+                    await Task.Delay(pollMilliseconds, cts.Token);
+                }
             }
 
             public void Dispose()
