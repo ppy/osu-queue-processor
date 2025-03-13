@@ -133,7 +133,6 @@ namespace osu.Server.QueueProcessor
             public void Dispose()
             {
                 cts.Cancel();
-                cts.Dispose();
             }
         }
     }
