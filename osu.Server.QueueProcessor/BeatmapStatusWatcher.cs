@@ -56,7 +56,7 @@ namespace osu.Server.QueueProcessor
 
             if (lastQueueId.HasValue)
             {
-                var items = (await connection.QueryAsync<bss_process_queue_item>("SELECT * FROM bss_process_queue WHERE queue_id > @lastQueueId LIMIT @limit", new
+                var items = (await connection.QueryAsync<bss_process_queue_item>("SELECT * FROM bss_process_queue WHERE queue_id > @lastQueueId ORDER BY queue_id LIMIT @limit", new
                 {
                     lastQueueId,
                     limit
