@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MySqlConnector;
+using Microsoft.Extensions.Logging;
 
 namespace osu.Server.QueueProcessor
 {
@@ -13,20 +14,36 @@ namespace osu.Server.QueueProcessor
     /// </summary>
     public static class DatabaseAccess
     {
-        /// <summary>
-        /// Retrieve a fresh MySQL connection. Should be disposed after use.
-        /// </summary>
+        private static readonly MySqlDataSource data_source;
+
+        static DatabaseAccess()
+        {
+            var sourceBuilder = new MySqlDataSourceBuilder(getConnectionString());
+
+            if (Environment.GetEnvironmentVariable("DB_LOGGING") == "1")
+            {
+                sourceBuilder.UseLoggerFactory(LoggerFactory.Create(builder =>
+                {
+                    builder
+                        .AddSimpleConsole(options => options.TimestampFormat = "HH:mm:ss ")
+                        .SetMinimumLevel(LogLevel.Trace)
+                        .AddFilter("MySqlConnector", LogLevel.Trace);
+                }));
+            }
+
+            data_source = sourceBuilder.Build();
+        }
+
         public static MySqlConnection GetConnection()
         {
-            var connection = new MySqlConnection(getConnectionString());
+            MySqlConnection connection = data_source.CreateConnection();
 
             connection.Open();
 
-            // TODO: remove this when we have set a saner time zone server-side.
-            using (var cmd = connection.CreateCommand())
+            using (MySqlCommand command = connection.CreateCommand())
             {
-                cmd.CommandText = "SET time_zone = '+00:00';";
-                cmd.ExecuteNonQuery();
+                command.CommandText = "SET time_zone = '+00:00';";
+                command.ExecuteNonQuery();
             }
 
             return connection;
